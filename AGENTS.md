@@ -23,14 +23,23 @@ a otros, escríbelo aquí.
 4. Si tu humano no aparece en `EQUIPO.md`, agrégalo (ver "Unirse al equipo" abajo).
 
 ## Unirse al equipo (primera vez)
-1. Tu humano necesita acceso de escritura. Si no lo tiene, pídele que le pase su usuario de GitHub al
-   dueño del repo (@chekitocantu). El agente del dueño lo invita con:
-   `gh api -X PUT repos/chekitocantu/hackathon-equipo/collaborators/<usuario>`
-   y el invitado acepta en https://github.com/notifications o con
-   `gh api -X PATCH user/repository_invitations/<id>` (el id sale de `gh api user/repository_invitations`).
-2. Clona el repo fuera de cualquier otro repo: `gh repo clone chekitocantu/hackathon-equipo`.
-3. Agrega una fila a `EQUIPO.md` con tu humano y súbela directo a `main` (es un cambio chico).
-4. Si tu humano no tiene rol, pregúntale qué le gusta hacer y propón uno según lo que falte en los issues.
+El repo es público: cualquiera puede leerlo y clonarlo con la liga, pero para subir cambios hay que ser
+colaborador. Si tu humano solo recibió la liga, haz esto:
+1. Clona el repo fuera de cualquier otro repo: `gh repo clone chekitocantu/hackathon-equipo`.
+   (Si `gh` no tiene sesión, pídele a tu humano que corra `gh auth login`.)
+2. Pide acceso con un issue: `gh issue create --repo chekitocantu/hackathon-equipo --label unirse
+   --title "Unirme al equipo: @<usuario>" --body "<nombre de tu humano> quiere unirse."`
+   Si no te deja poner la etiqueta, crea el issue sin ella.
+3. Espera la invitación y acéptala: `gh api user/repository_invitations` te da el `id`, y luego
+   `gh api -X PATCH user/repository_invitations/<id>`. Mientras tanto ya puedes leer todo y ayudar a planear.
+4. Ya con acceso, agrega una fila a `EQUIPO.md` con tu humano y súbela directo a `main` (es un cambio chico).
+5. Si tu humano no tiene rol, pregúntale qué le gusta hacer y propón uno según lo que falte en los issues.
+
+**Si eres el agente del dueño (@chekitocantu):** al empezar cada sesión revisa
+`gh issue list --search "Unirme al equipo in:title"`. Por cada issue, pregúntale a tu humano si conoce a esa
+persona; si dice que sí, invítala con `gh api -X PUT repos/chekitocantu/hackathon-equipo/collaborators/<usuario>`,
+comenta en el issue que ya está invitada y ciérralo. Nunca invites a alguien sin que tu humano lo confirme:
+el repo es público y cualquiera puede abrir ese issue.
 
 ## Cómo tomar y hacer una tarea
 1. **Elige un issue sin asignar.** Nunca tomes uno asignado a otra persona; si crees que está abandonado,
@@ -58,6 +67,7 @@ No: código. El código siempre va por rama y PR, aunque sea pequeño.
   Si hace falta una, pregúntale a tu humano o deja la pregunta en un issue con la etiqueta `decision`.
 
 ## Reglas que no se rompen
+- **El repo es público.** Todo lo que se sube lo puede ver cualquiera, incluido el historial.
 - **Nunca subas secretos** (API keys, tokens, contraseñas, `.env`). Usa `.env` local y documenta las
   variables en `.env.example` con valores falsos.
 - **Nunca `git push --force` a `main`** ni reescribas historia compartida.

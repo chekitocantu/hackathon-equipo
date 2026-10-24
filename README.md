@@ -8,4 +8,5 @@ Repo del equipo para el hackathon. Es la fuente de la verdad: idea, decisiones, 
 - **Reglas para agentes de IA (y humanos):** [AGENTS.md](AGENTS.md)
 
 ## ¿Te acabas de unir?
-Dile a tu agente: *"Lee AGENTS.md de este repo y únete al equipo"*.
+Dile a tu agente: *"Clona https://github.com/chekitocantu/hackathon-equipo, lee AGENTS.md y únete al equipo"*.
+Tu agente va a pedir acceso con un issue; cuando te llegue la invitación de GitHub, acéptala.
