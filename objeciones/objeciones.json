@@ -1,0 +1,1212 @@
+{
+  "aviso": "Banco de objeciones para el Traductor. Las variantes, preguntas, «Di mejor» y «No digas» son adaptaciones propias basadas en las fuentes de cada objeción (reporte «Manejo de objeciones en ventas», 2026-10-24), no citas textuales. Las de regulación deben pasar por revisión legal.",
+  "objeciones": [
+    {
+      "id": "OBJ-01",
+      "categoria": "precio",
+      "objecion": "Está muy caro",
+      "variantes": [
+        "Está muy caro",
+        "Uf, con ese precio no la armamos"
+      ],
+      "detras": "No ve el valor; compara servicios distintos; busca descuento; no tiene presupuesto (otra objeción)",
+      "preguntas": [
+        "¿Caro comparado con qué: con lo que pagan hoy o con otra propuesta?",
+        "¿Contra qué cifra lo compara: renta mensual o costo total a 36 meses?",
+        "¿Cuánto les cuesta una hora sin enlace o sin sistemas?",
+        "Si el precio fuera el adecuado, ¿la solución resuelve lo que necesitan?"
+      ],
+      "di_mejor": "Prefiero ajustar el alcance que bajarle a la calidad. Veamos qué es indispensable.",
+      "no_decir": [
+        "Ofrecer descuento de inmediato",
+        "Es que la calidad se paga",
+        "No, no está caro"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://blog.hubspot.es/sales/manejo-de-objeciones-ventas",
+        "https://www.appvizer.es/revista/relacion-cliente/software-crm/objeciones-de-ventas",
+        "https://www.rainsalestraining.com/sales-training-programs/sales-negotiation",
+        "https://www.gong.io/blog/sales-reps-talk-pricing/"
+      ]
+    },
+    {
+      "id": "OBJ-02",
+      "categoria": "precio",
+      "objecion": "No tenemos presupuesto",
+      "variantes": [
+        "No tenemos presupuesto",
+        "Ahorita no hay lana para eso",
+        "Finanzas congeló gastos"
+      ],
+      "detras": "El presupuesto llega en otro momento; falta prioridad; el interlocutor no controla el presupuesto",
+      "preguntas": [
+        "¿Cuándo arman el presupuesto del próximo ejercicio?",
+        "¿Esto saldría del presupuesto de TI, de operaciones o de otra área?",
+        "¿Les serviría arrancar por fases o en renta mensual?",
+        "¿Qué tendría que demostrar para que entre en la planeación?"
+      ],
+      "di_mejor": "Muchas veces no falta presupuesto sino caso de negocio. ¿Lo armamos con sus números?",
+      "no_decir": [
+        "Le llamo cuando tenga presupuesto sin fecha",
+        "inventar urgencia"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://blog.hubspot.es/sales/manejo-de-objeciones-ventas",
+        "https://www.appvizer.es/revista/relacion-cliente/software-crm/objeciones-de-ventas",
+        "https://www.rainsalestraining.com/sales-training-programs/sales-negotiation",
+        "https://www.gong.io/blog/sales-reps-talk-pricing/"
+      ]
+    },
+    {
+      "id": "OBJ-03",
+      "categoria": "precio",
+      "objecion": "La competencia me lo da más barato",
+      "variantes": [
+        "La competencia me lo da más barato",
+        "Telmex me lo deja más barato",
+        "En AWS directo me sale menos"
+      ],
+      "detras": "Necesita justificar la elección ante compras; las propuestas no son comparables; usa la cotización para negociar",
+      "preguntas": [
+        "¿Las propuestas incluyen el mismo SLA, ancho de banda y tiempo de respuesta?",
+        "Aparte del precio, ¿qué le gustó de la otra propuesta?",
+        "Si quedaran iguales en precio, ¿con cuál se quedaría?"
+      ],
+      "di_mejor": "Tiene sentido comparar. Asegurémonos de comparar lo mismo: SLA, soporte, redundancia y migración.",
+      "no_decir": [
+        "Hablar mal del competidor",
+        "igualar el precio sin preguntar"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://blog.hubspot.es/sales/manejo-de-objeciones-ventas",
+        "https://www.appvizer.es/revista/relacion-cliente/software-crm/objeciones-de-ventas",
+        "https://www.rainsalestraining.com/sales-training-programs/sales-negotiation",
+        "https://www.gong.io/blog/sales-reps-talk-pricing/"
+      ]
+    },
+    {
+      "id": "OBJ-04",
+      "categoria": "precio",
+      "objecion": "¿Me haces descuento?",
+      "variantes": [
+        "¿Me haces descuento?",
+        "Compras me pide un mejor número"
+      ],
+      "detras": "Costumbre de negociación (táctica común en B2B); requisito de compras; prueba de si el precio tiene aire",
+      "preguntas": [
+        "¿El descuento es por presupuesto, por una comparación o por política de compras?",
+        "Aparte del precio, ¿todo lo demás está bien?",
+        "Si ajustamos el precio, ¿podríamos extender el plazo o sumar sitios?"
+      ],
+      "di_mejor": "Puedo revisarlo, pero cualquier ajuste va ligado a algo: plazo, volumen o fecha de firma.",
+      "no_decir": [
+        "Dar descuento sin contrapartida",
+        "descuentos escalonados",
+        "Ese es el precio y ya"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://blog.hubspot.es/sales/manejo-de-objeciones-ventas",
+        "https://www.appvizer.es/revista/relacion-cliente/software-crm/objeciones-de-ventas",
+        "https://www.rainsalestraining.com/sales-training-programs/sales-negotiation",
+        "https://www.gong.io/blog/sales-reps-talk-pricing/"
+      ]
+    },
+    {
+      "id": "OBJ-05",
+      "categoria": "proveedor",
+      "objecion": "Ya tenemos proveedor",
+      "variantes": [
+        "Ya tenemos proveedor",
+        "Eso ya lo tenemos cubierto"
+      ],
+      "detras": "Reflejo para cortar la llamada; costo y riesgo de cambiar; no ve razón para cambiar",
+      "preguntas": [
+        "¿Con quién trabajan hoy y desde hace cuánto?",
+        "Si pudiera mejorar algo del servicio actual, ¿qué sería?",
+        "¿Tienen un segundo enlace o todo depende de un solo proveedor?",
+        "¿Qué tendría que pasar para considerar una segunda opción?"
+      ],
+      "di_mejor": "No le propongo cambiar todo; muchos clientes nos usan como respaldo o segunda opinión.",
+      "no_decir": [
+        "Atacar al proveedor actual",
+        "Nosotros somos mejores",
+        "colgar sin preguntar cuándo vence el contrato"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://close.com/blog/sales-objections",
+        "https://giantrocketship.com/blog/top-5-objections-prospects-tell-an-msp-and-what-to-do-about-it",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://redriver.com/managed-services/managed-it-services-vs-in-house-it",
+        "https://www.smartlead.ai/blog/cold-call-objection-handling"
+      ]
+    },
+    {
+      "id": "OBJ-06",
+      "categoria": "proveedor",
+      "objecion": "Estamos contentos con Telmex / Totalplay / AWS directo",
+      "variantes": [
+        "Estamos contentos con Telmex / Totalplay / AWS directo"
+      ],
+      "detras": "Satisfacción real; miedo al riesgo de migrar; relación personal con su ejecutivo",
+      "preguntas": [
+        "¿Qué es lo que más valoran del servicio actual?",
+        "¿Qué pasaría con la operación si ese único enlace se cae un día?",
+        "Si pudiera agregar algo sin cambiar de proveedor, ¿qué sería?"
+      ],
+      "di_mejor": "No se trata de reemplazar a nadie, sino de reducir la dependencia de un solo proveedor.",
+      "no_decir": [
+        "No saben lo que se están perdiendo",
+        "criticar la marca"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://close.com/blog/sales-objections",
+        "https://giantrocketship.com/blog/top-5-objections-prospects-tell-an-msp-and-what-to-do-about-it",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://redriver.com/managed-services/managed-it-services-vs-in-house-it",
+        "https://www.smartlead.ai/blog/cold-call-objection-handling"
+      ]
+    },
+    {
+      "id": "OBJ-07",
+      "categoria": "proveedor",
+      "objecion": "Nuestro integrador lo hace",
+      "variantes": [
+        "Nuestro integrador lo hace",
+        "Lo lleva nuestra empresa de sistemas"
+      ],
+      "detras": "Lealtad o dependencia con el integrador; no quiere coordinar a varios actores",
+      "preguntas": [
+        "¿El integrador recomienda el proveedor de conectividad o ustedes lo eligen?",
+        "¿Me autoriza a contactarlo para armar la propuesta en conjunto?",
+        "¿Quién decide al final: ustedes o el integrador?"
+      ],
+      "di_mejor": "Trabajamos con integradores, no contra ellos. Podemos ser el proveedor detrás de su socio.",
+      "no_decir": [
+        "Puentear al integrador sin permiso",
+        "Con nosotros ya no lo necesitaría"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://close.com/blog/sales-objections",
+        "https://giantrocketship.com/blog/top-5-objections-prospects-tell-an-msp-and-what-to-do-about-it",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://redriver.com/managed-services/managed-it-services-vs-in-house-it",
+        "https://www.smartlead.ai/blog/cold-call-objection-handling"
+      ]
+    },
+    {
+      "id": "OBJ-08",
+      "categoria": "proveedor",
+      "objecion": "Lo hacemos nosotros mismos",
+      "variantes": [
+        "Lo hacemos nosotros mismos",
+        "Tenemos nuestro propio site"
+      ],
+      "detras": "Orgullo o empleo del equipo interno (el interlocutor puede ser parte de ese equipo); control",
+      "preguntas": [
+        "¿Qué parte del tiempo del equipo se va en operación?",
+        "¿Cómo cubren guardias nocturnas y vacaciones?",
+        "¿Qué proyectos se quedan pendientes por apagar fuegos?"
+      ],
+      "di_mejor": "Su equipo conoce el negocio mejor que nadie; la idea es quitarle lo operativo.",
+      "no_decir": [
+        "Sale más barato que su gente",
+        "insinuar que el equipo no es capaz"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://close.com/blog/sales-objections",
+        "https://giantrocketship.com/blog/top-5-objections-prospects-tell-an-msp-and-what-to-do-about-it",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://redriver.com/managed-services/managed-it-services-vs-in-house-it",
+        "https://www.smartlead.ai/blog/cold-call-objection-handling"
+      ]
+    },
+    {
+      "id": "OBJ-09",
+      "categoria": "timing",
+      "objecion": "No es el momento",
+      "variantes": [
+        "No es el momento",
+        "Tenemos muchas cosas encima"
+      ],
+      "detras": "Prioridades que compiten; falta de urgencia; rechazo educado",
+      "preguntas": [
+        "¿Qué proyectos tienen prioridad hoy?",
+        "¿Qué les cuesta seguir igual seis meses más?",
+        "¿Hay alguna fecha clave: renovación, apertura de sucursal, auditoría?"
+      ],
+      "di_mejor": "No le pido decidir hoy, solo dejar claro cuánto cuesta esperar.",
+      "no_decir": [
+        "Va a ser rápido, se lo prometo",
+        "aceptar más adelante sin fecha"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/"
+      ]
+    },
+    {
+      "id": "OBJ-10",
+      "categoria": "timing",
+      "objecion": "Llámame el próximo trimestre",
+      "variantes": [
+        "Llámame el próximo trimestre",
+        "Después de Semana Santa lo vemos"
+      ],
+      "detras": "Evasiva (Gong la clasifica así) o un evento real",
+      "preguntas": [
+        "¿Qué va a cambiar el próximo trimestre que hoy no está?",
+        "¿Agendamos desde ahora una fecha tentativa?",
+        "¿Qué información le sería útil tener lista para entonces?"
+      ],
+      "di_mejor": "Con gusto. Para que esa llamada valga la pena, ¿qué necesita saber de nosotros?",
+      "no_decir": [
+        "Claro, yo le marco sin fecha ni motivo"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/"
+      ]
+    },
+    {
+      "id": "OBJ-11",
+      "categoria": "timing",
+      "objecion": "Estamos en cierre de año",
+      "variantes": [
+        "Estamos en cierre de año",
+        "Estamos en auditoría"
+      ],
+      "detras": "Congelamiento real de compras o de cambios en TI; presupuesto agotado",
+      "preguntas": [
+        "¿Su cierre es en diciembre o tienen otro año fiscal?",
+        "¿Cuándo arrancan la planeación del próximo año?",
+        "¿Les convendría firmar ahora e implementar después del congelamiento?"
+      ],
+      "di_mejor": "Si lo dejamos planeado, entra en el presupuesto nuevo sin carreras.",
+      "no_decir": [
+        "Forzar una implementación durante el congelamiento"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/"
+      ]
+    },
+    {
+      "id": "OBJ-12",
+      "categoria": "evasiva",
+      "objecion": "Mándame información por correo",
+      "variantes": [
+        "Mándame información por correo",
+        "Pásame algo por escrito"
+      ],
+      "detras": "Forma educada de colgar; interés real sin tiempo; quiere algo para circular internamente",
+      "preguntas": [
+        "Claro. ¿Qué tema específico quiere que cubra?",
+        "¿Lo revisaría usted o lo compartiría con alguien más?",
+        "¿Se lo mando y lo revisamos el jueves a las 10?"
+      ],
+      "di_mejor": "Para no mandarle un folleto genérico, deme dos datos y le envío solo lo que aplica.",
+      "no_decir": [
+        "Mandar un PDF genérico sin siguiente paso",
+        "¿Lo va a leer?"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://www.gong.io/blog/cold-call-objections/",
+        "https://www.gong.io/resources/labs/we-found-the-top-objections-across-300m-cold-calls-heres-how-to-handle-them-all/"
+      ]
+    },
+    {
+      "id": "OBJ-13",
+      "categoria": "evasiva",
+      "objecion": "No me interesa",
+      "variantes": [
+        "No me interesa",
+        "No necesitamos nada"
+      ],
+      "detras": "Reflejo, porque aún no sabe qué se le ofrece; llamadas repetidas de otros proveedores",
+      "preguntas": [
+        "¿Es porque ya lo tienen resuelto o porque no es prioridad?",
+        "¿Le hago una sola pregunta y, si no aplica, cuelgo?",
+        "¿Cuándo vence su contrato actual de conectividad?"
+      ],
+      "di_mejor": "Sí, es una llamada en frío. ¿Me da 30 segundos para que decida si cuelga?",
+      "no_decir": [
+        "¿Por qué no le interesa?",
+        "seguir el pitch como si nada"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://www.gong.io/blog/cold-call-objections/",
+        "https://www.gong.io/resources/labs/we-found-the-top-objections-across-300m-cold-calls-heres-how-to-handle-them-all/"
+      ]
+    },
+    {
+      "id": "OBJ-14",
+      "categoria": "evasiva",
+      "objecion": "Estoy ocupado",
+      "variantes": [
+        "Estoy ocupado",
+        "Ando en junta",
+        "Ando manejando"
+      ],
+      "detras": "No puede de verdad, o es evasiva",
+      "preguntas": [
+        "¿Le marco hoy en la tarde o mañana temprano?",
+        "¿Le funciona el martes o el jueves, 15 minutos?",
+        "¿Le mando un WhatsApp con una línea de contexto?"
+      ],
+      "di_mejor": "Le tomo 20 segundos para decirle por qué le llamo y usted decide si agendamos.",
+      "no_decir": [
+        "Abrir con ¿Lo agarro en mal momento?",
+        "seguir hablando"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://www.gong.io/blog/cold-call-objections/",
+        "https://www.gong.io/resources/labs/we-found-the-top-objections-across-300m-cold-calls-heres-how-to-handle-them-all/"
+      ]
+    },
+    {
+      "id": "OBJ-15",
+      "categoria": "evasiva",
+      "objecion": "Eres el cuarto que me llama esta semana",
+      "variantes": [
+        "Eres el cuarto que me llama esta semana"
+      ],
+      "detras": "Saturación de llamadas",
+      "preguntas": [
+        "¿Me da 30 segundos y, si no aplica, cuelgo?",
+        "¿Cuándo vence su contrato, para no llamarle antes de tiempo?"
+      ],
+      "di_mejor": "Decir cuánto dura la llamada, de dónde salió el número y un hecho fechado y verificable",
+      "no_decir": [
+        "Fingir ser distinto a los demás",
+        "discutir"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://www.gong.io/blog/cold-call-objections/",
+        "https://www.gong.io/resources/labs/we-found-the-top-objections-across-300m-cold-calls-heres-how-to-handle-them-all/"
+      ]
+    },
+    {
+      "id": "OBJ-16",
+      "categoria": "evasiva",
+      "objecion": "¿De dónde sacaste mi número?",
+      "variantes": [
+        "¿De dónde sacaste mi número?"
+      ],
+      "detras": "Desconfianza",
+      "preguntas": [
+        "¿Le explico en 20 segundos por qué le llamo?"
+      ],
+      "di_mejor": "Explicar la fuente con calma y sin evasivas",
+      "no_decir": [
+        "Evadir o inventar la fuente"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://www.gong.io/blog/cold-call-objections/",
+        "https://www.gong.io/resources/labs/we-found-the-top-objections-across-300m-cold-calls-heres-how-to-handle-them-all/"
+      ]
+    },
+    {
+      "id": "OBJ-17",
+      "categoria": "autoridad",
+      "objecion": "Lo tengo que consultar con mi jefe / TI / compras",
+      "variantes": [
+        "Lo tengo que consultar con mi jefe / TI / compras",
+        "Lo subo al comité"
+      ],
+      "detras": "No tiene la autoridad final; necesita armar el caso interno; esconde sus propias dudas detrás del jefe",
+      "preguntas": [
+        "¿Quién más participa en la decisión y qué le importa a cada uno?",
+        "¿Qué cree que le va a preguntar su director?",
+        "¿Usted lo recomendaría? ¿Qué duda tiene todavía?",
+        "¿Agendamos 20 minutos con usted y su director juntos?"
+      ],
+      "di_mejor": "Para que no le toque defenderlo solo, armemos juntos el caso con los números que le van a pedir.",
+      "no_decir": [
+        "¿Entonces con quién tengo que hablar?",
+        "saltarse al contacto sin acordarlo"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://spotio.com/blog/how-to-confidently-handle-sales-objections-a-field-tested-action-plan/",
+        "https://www.gong.io/blog/objection-handling-techniques/"
+      ]
+    },
+    {
+      "id": "OBJ-18",
+      "categoria": "autoridad",
+      "objecion": "No soy quien decide",
+      "variantes": [
+        "No soy quien decide",
+        "Yo nada más soy el contacto"
+      ],
+      "detras": "No es su área de verdad, o es evasiva",
+      "preguntas": [
+        "¿Quién ve los temas de conectividad o nube?",
+        "¿Usted participa en la evaluación aunque no firme?",
+        "¿Me presenta o prefiere que lo contacte mencionándolo?"
+      ],
+      "di_mejor": "Su opinión cuenta igual: quien opera el servicio sabe dónde están los problemas.",
+      "no_decir": [
+        "Perder el interés de forma evidente"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://spotio.com/blog/how-to-confidently-handle-sales-objections-a-field-tested-action-plan/",
+        "https://www.gong.io/blog/objection-handling-techniques/"
+      ]
+    },
+    {
+      "id": "OBJ-19",
+      "categoria": "autoridad",
+      "objecion": "Déjame pensarlo",
+      "variantes": [
+        "Déjame pensarlo"
+      ],
+      "detras": "Alguna duda no dicha; ya eligió a otro proveedor",
+      "preguntas": [
+        "Claro. ¿Qué parte le gustaría pensar con más calma?",
+        "¿Hay algo de la propuesta que no le convenció?",
+        "¿Ya decidieron irse con otra opción? Puede decírmelo con confianza."
+      ],
+      "di_mejor": "Resumir lo acordado y proponer una fecha",
+      "no_decir": [
+        "¿Qué hay que pensar? en tono de reproche"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://spotio.com/blog/how-to-confidently-handle-sales-objections-a-field-tested-action-plan/",
+        "https://www.gong.io/blog/objection-handling-techniques/"
+      ]
+    },
+    {
+      "id": "OBJ-20",
+      "categoria": "contrato",
+      "objecion": "Tenemos contrato vigente",
+      "variantes": [
+        "Tenemos contrato vigente",
+        "Tenemos plazo forzoso",
+        "Acabamos de renovar"
+      ],
+      "detras": "Bloqueo temporal real; excusa; no conoce las fechas ni las cláusulas",
+      "preguntas": [
+        "¿En qué mes vence y con cuánto aviso hay que cancelar?",
+        "¿Se renueva automáticamente si nadie lo cancela?",
+        "Si no existiera el contrato, ¿seguirían con el mismo proveedor?",
+        "¿Hay sitios o servicios nuevos fuera de ese contrato?"
+      ],
+      "di_mejor": "Entonces no es un no, es una fecha. Preparemos la comparación antes de que cierre la ventana de cancelación.",
+      "no_decir": [
+        "Colgar sin registrar la fecha",
+        "Se puede salir fácilmente"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://tldv.io/es/blog/objection-handling/"
+      ]
+    },
+    {
+      "id": "OBJ-21",
+      "categoria": "contrato",
+      "objecion": "Nos cobran penalización si cambiamos",
+      "variantes": [
+        "Nos cobran penalización si cambiamos"
+      ],
+      "detras": "Costo de cambio; miedo a quedar mal internamente por un costo hundido",
+      "preguntas": [
+        "¿Sabe de cuánto es la penalización y cómo se calcula?",
+        "¿Cuántos meses le quedan al contrato?",
+        "¿Me permite comparar el costo de salir contra el beneficio?"
+      ],
+      "di_mejor": "Hagamos la cuenta completa. Si no conviene, se lo digo.",
+      "no_decir": [
+        "Prometer absorber penalizaciones sin aprobación",
+        "dar asesoría legal"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://tldv.io/es/blog/objection-handling/"
+      ]
+    },
+    {
+      "id": "OBJ-22",
+      "categoria": "contrato",
+      "objecion": "No quiero amarrarme a un contrato largo",
+      "variantes": [
+        "No quiero amarrarme a un contrato largo",
+        "¿Y si no nos funciona?"
+      ],
+      "detras": "Miedo a quedar atado a un mal servicio",
+      "preguntas": [
+        "¿Qué plazo le daría tranquilidad?",
+        "¿Le preocupa el costo o quedarse atado si el servicio falla?"
+      ],
+      "di_mejor": "Lo justo es que el compromiso vaya en los dos sentidos: si no cumplimos el SLA, que nos cueste a nosotros.",
+      "no_decir": [
+        "Es estándar, todos firman a 36 meses"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://close.com/blog/sales-objections",
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones",
+        "https://tldv.io/es/blog/objection-handling/"
+      ]
+    },
+    {
+      "id": "OBJ-23",
+      "categoria": "necesidad",
+      "objecion": "No lo necesitamos",
+      "variantes": [
+        "No lo necesitamos",
+        "Estamos bien así"
+      ],
+      "detras": "No ve el problema o no le duele lo suficiente; status quo",
+      "preguntas": [
+        "¿Cómo resuelven hoy el respaldo entre sucursales?",
+        "¿Qué le quita más tiempo a su equipo de TI?",
+        "¿Qué tanto ha crecido su consumo de nube en el último año?"
+      ],
+      "di_mejor": "Puede ser. En empresas similares vemos [insight verificado]; ¿aplica en su caso o no?",
+      "no_decir": [
+        "Todos lo necesitan",
+        "insistir con funcionalidades"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
+        "https://giantrocketship.com/blog/top-5-objections-prospects-tell-an-msp-and-what-to-do-about-it",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones"
+      ]
+    },
+    {
+      "id": "OBJ-24",
+      "categoria": "necesidad",
+      "objecion": "Nunca nos ha pasado",
+      "variantes": [
+        "Nunca nos ha pasado",
+        "Nunca se nos ha caído el internet"
+      ],
+      "detras": "Sesgo de optimismo; no ha cuantificado el riesgo",
+      "preguntas": [
+        "Si mañana se cae el enlace cuatro horas, ¿qué se detiene?",
+        "¿Tienen un plan documentado de continuidad?",
+        "¿Cuánto produce la empresa por hora?"
+      ],
+      "di_mejor": "Que no haya pasado es buena señal; la pregunta es cuánto cuesta el día que pase.",
+      "no_decir": [
+        "Asustar con catástrofes",
+        "inventar estadísticas de ataques"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
+        "https://giantrocketship.com/blog/top-5-objections-prospects-tell-an-msp-and-what-to-do-about-it",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones"
+      ]
+    },
+    {
+      "id": "OBJ-25",
+      "categoria": "necesidad",
+      "objecion": "No conozco a Alestra",
+      "variantes": [
+        "No conozco a Alestra",
+        "¿Son de Telmex o de quién?"
+      ],
+      "detras": "Riesgo de elegir a un desconocido; duda sobre respaldo y cobertura",
+      "preguntas": [
+        "¿Qué necesita saber de un proveedor para considerarlo confiable?",
+        "¿Le ayudaría hablar con un cliente de su industria?",
+        "¿En qué ciudades necesitan cobertura?"
+      ],
+      "di_mejor": "Le comparto referencias de su sector y usted juzga.",
+      "no_decir": [
+        "Un monólogo de historia corporativa",
+        "cifras sin verificar"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
+        "https://giantrocketship.com/blog/top-5-objections-prospects-tell-an-msp-and-what-to-do-about-it",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones"
+      ]
+    },
+    {
+      "id": "OBJ-26",
+      "categoria": "necesidad",
+      "objecion": "Tuvimos mala experiencia",
+      "variantes": [
+        "Tuvimos mala experiencia",
+        "La última migración fue un desastre",
+        "Nos quedamos un día sin teléfonos"
+      ],
+      "detras": "Miedo a repetir; desconfianza en promesas comerciales; riesgo personal de quien decidió",
+      "preguntas": [
+        "¿Qué pasó exactamente: portabilidad, instalación, soporte o facturación?",
+        "¿Qué tendría que ser diferente esta vez?",
+        "¿Le ayudaría empezar con un sitio piloto?"
+      ],
+      "di_mejor": "Con razón la desconfianza. En vez de prometerle, le enseño el plan de migración paso a paso y lo ponemos por escrito.",
+      "no_decir": [
+        "Con nosotros eso no pasa",
+        "contestar con tarifa en vez de con método"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
+        "https://giantrocketship.com/blog/top-5-objections-prospects-tell-an-msp-and-what-to-do-about-it",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones"
+      ]
+    },
+    {
+      "id": "OBJ-27",
+      "categoria": "necesidad",
+      "objecion": "Su competidor dice que ustedes…",
+      "variantes": [
+        "Su competidor dice que ustedes…"
+      ],
+      "detras": "Duda sembrada por otro proveedor",
+      "preguntas": [
+        "¿Quiere que le muestre el dato?"
+      ],
+      "di_mejor": "Decir con calma que no es correcto y hacer una pausa",
+      "no_decir": [
+        "Contraatacar"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
+        "https://giantrocketship.com/blog/top-5-objections-prospects-tell-an-msp-and-what-to-do-about-it",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones"
+      ]
+    },
+    {
+      "id": "OBJ-28",
+      "categoria": "necesidad",
+      "objecion": "Nos están comprando / estamos en reestructura",
+      "variantes": [
+        "Nos están comprando / estamos en reestructura"
+      ],
+      "detras": "Incertidumbre organizacional",
+      "preguntas": [
+        "¿Cuándo esperan que se defina la nueva estructura?",
+        "¿Quién verá TI después del cambio?"
+      ],
+      "di_mejor": "Cerrar con profesionalismo y agendar cuándo volver a contactar",
+      "no_decir": [
+        "Presionar"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://blog.hubspot.com/sales/handling-common-sales-objections",
+        "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
+        "https://giantrocketship.com/blog/top-5-objections-prospects-tell-an-msp-and-what-to-do-about-it",
+        "https://skipcall.io/es/solutions/operadores-telecomunicaciones"
+      ]
+    },
+    {
+      "id": "OBJ-29",
+      "categoria": "seguridad",
+      "objecion": "¿Y si nos hackean?",
+      "variantes": [
+        "¿Y si nos hackean?",
+        "¿Quién responde si se filtra información?"
+      ],
+      "detras": "Perder operación, reputación o información; no saber quién responde",
+      "preguntas": [
+        "¿Les ha pasado algún incidente antes? ¿Qué aprendieron?",
+        "¿Qué sería más grave: parar la operación o que se filtre información?",
+        "¿Cuándo probaron restaurar un respaldo por última vez?"
+      ],
+      "di_mejor": "Ningún proveedor serio le dice que el riesgo es cero. Revisemos con un especialista cómo se reparten las responsabilidades.",
+      "no_decir": [
+        "Es imposible que los hackeen",
+        "La nube es 100% segura",
+        "Nos hacemos responsables de todo"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://www.deloitte.com/content/dam/Deloitte/us/Documents/risk/us-risk-aws-ransomware-resiliency-whitepaper.pdf",
+        "https://static.fortra.com/alert-logic/pdfs/guide/fta-al-key-steps-in-defining-a-shared-responsibility-model-for-aws-gd.pdf",
+        "https://n2ws.com/blog/aws-cloud/preventing-ransomware-on-aws",
+        "https://redriver.com/?p=41076",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf"
+      ]
+    },
+    {
+      "id": "OBJ-30",
+      "categoria": "seguridad",
+      "objecion": "No queremos nuestros datos en la nube",
+      "variantes": [
+        "No queremos nuestros datos en la nube",
+        "Prefiero mis servidores aquí donde los veo"
+      ],
+      "detras": "Control y visibilidad; a veces, una restricción regulatoria que no menciona",
+      "preguntas": [
+        "¿Qué datos en particular le preocupa mover?",
+        "¿Hay alguna regla interna o de un regulador que lo limite?",
+        "Si una parte se quedara en sitio y otra no, ¿le haría sentido?"
+      ],
+      "di_mejor": "No todo tiene que irse a la nube. Un especialista revisa con ustedes qué cargas sí convienen.",
+      "no_decir": [
+        "Todos ya se están yendo a la nube",
+        "Nadie del proveedor puede ver nada"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://www.deloitte.com/content/dam/Deloitte/us/Documents/risk/us-risk-aws-ransomware-resiliency-whitepaper.pdf",
+        "https://static.fortra.com/alert-logic/pdfs/guide/fta-al-key-steps-in-defining-a-shared-responsibility-model-for-aws-gd.pdf",
+        "https://n2ws.com/blog/aws-cloud/preventing-ransomware-on-aws",
+        "https://redriver.com/?p=41076",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf"
+      ]
+    },
+    {
+      "id": "OBJ-31",
+      "categoria": "seguridad",
+      "objecion": "¿Y si nos secuestran la información?",
+      "variantes": [
+        "¿Y si nos secuestran la información?"
+      ],
+      "detras": "Capacidad de recuperarse; tiempo sin operar",
+      "preguntas": [
+        "¿Cuánto tiempo sin sistemas aguanta su operación?",
+        "¿Cuánta información podrían perder: una hora, un día?",
+        "¿Sus respaldos están separados de la red principal?"
+      ],
+      "di_mejor": "Platiquemos cómo recuperarse rápido si algo pasa; esos tiempos los define el especialista con ustedes.",
+      "no_decir": [
+        "El respaldo es inmune",
+        "Se recuperan en X minutos sin validación"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://www.deloitte.com/content/dam/Deloitte/us/Documents/risk/us-risk-aws-ransomware-resiliency-whitepaper.pdf",
+        "https://static.fortra.com/alert-logic/pdfs/guide/fta-al-key-steps-in-defining-a-shared-responsibility-model-for-aws-gd.pdf",
+        "https://n2ws.com/blog/aws-cloud/preventing-ransomware-on-aws",
+        "https://redriver.com/?p=41076",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf"
+      ]
+    },
+    {
+      "id": "OBJ-32",
+      "categoria": "regulacion",
+      "objecion": "¿Esto cumple con la CNBV?",
+      "variantes": [
+        "¿Esto cumple con la CNBV?",
+        "Somos SOFOM y la CNBV nos revisa"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Qué tipo de entidad son ante la CNBV?",
+        "¿Esto tocaría procesos críticos u operación con clientes?",
+        "¿Quién lleva cumplimiento o jurídico, para incluirlo en la siguiente reunión?"
+      ],
+      "di_mejor": "Los requisitos dependen de su tipo de entidad y de lo que se contrate. Propongo que un especialista los revise con su área de cumplimiento.",
+      "no_decir": [
+        "Cumplimos con la CNBV",
+        "No necesitan autorización",
+        "Garantizamos que pasa la auditoría"
+      ],
+      "revisar_legal": true,
+      "fuentes": [
+        "https://www.ey.com/es_mx/technical/tax/boletines-fiscales/nueva-ley-federal-proteccion-datos-personal-posesion-particulares",
+        "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
+        "https://www.littler.com/es/news-analysis/asap/mexico-tiene-nueva-ley-en-materia-de-proteccion-de-datos-personales",
+        "https://aws.amazon.com/financial-services/security-compliance/compliance-center/mx",
+        "https://www.ixopay.com/reports-and-guides/ixopay-pci-dss-v401-shared-responsibility-matrix",
+        "https://services.google.com/fh/files/misc/gcp_pci_dss_v4_responsibility_matrix.pdf"
+      ]
+    },
+    {
+      "id": "OBJ-33",
+      "categoria": "regulacion",
+      "objecion": "¿Y la ley de datos personales?",
+      "variantes": [
+        "¿Y la ley de datos personales?",
+        "Antes era el INAI, ¿ahora quién?"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Qué datos personales manejarían: clientes, empleados, pacientes?",
+        "¿Su aviso de privacidad ya contempla proveedores tecnológicos?",
+        "¿Les gustaría que su área legal revise el contrato de tratamiento de datos?"
+      ],
+      "di_mejor": "La nueva ley está vigente desde marzo de 2025 y la autoridad es la Secretaría Anticorrupción y Buen Gobierno. Cómo les aplica lo revisa su área legal.",
+      "no_decir": [
+        "Con nosotros ya cumplen la ley",
+        "El INAI nos aprobó",
+        "cualquier cifra de multas"
+      ],
+      "revisar_legal": true,
+      "fuentes": [
+        "https://www.ey.com/es_mx/technical/tax/boletines-fiscales/nueva-ley-federal-proteccion-datos-personal-posesion-particulares",
+        "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
+        "https://www.littler.com/es/news-analysis/asap/mexico-tiene-nueva-ley-en-materia-de-proteccion-de-datos-personales",
+        "https://aws.amazon.com/financial-services/security-compliance/compliance-center/mx",
+        "https://www.ixopay.com/reports-and-guides/ixopay-pci-dss-v401-shared-responsibility-matrix",
+        "https://services.google.com/fh/files/misc/gcp_pci_dss_v4_responsibility_matrix.pdf"
+      ]
+    },
+    {
+      "id": "OBJ-34",
+      "categoria": "regulacion",
+      "objecion": "Manejamos expedientes de pacientes",
+      "variantes": [
+        "Manejamos expedientes de pacientes"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Guardaría expedientes clínicos o solo datos administrativos?",
+        "¿Quién valida la normatividad en la clínica?"
+      ],
+      "di_mejor": "Los datos de salud tienen reglas especiales; un especialista revisa con su responsable normativo qué aplica.",
+      "no_decir": [
+        "Esto cumple la NOM-024 sin una certificación documentada"
+      ],
+      "revisar_legal": true,
+      "fuentes": [
+        "https://www.ey.com/es_mx/technical/tax/boletines-fiscales/nueva-ley-federal-proteccion-datos-personal-posesion-particulares",
+        "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
+        "https://www.littler.com/es/news-analysis/asap/mexico-tiene-nueva-ley-en-materia-de-proteccion-de-datos-personales",
+        "https://aws.amazon.com/financial-services/security-compliance/compliance-center/mx",
+        "https://www.ixopay.com/reports-and-guides/ixopay-pci-dss-v401-shared-responsibility-matrix",
+        "https://services.google.com/fh/files/misc/gcp_pci_dss_v4_responsibility_matrix.pdf"
+      ]
+    },
+    {
+      "id": "OBJ-35",
+      "categoria": "regulacion",
+      "objecion": "Cobramos con tarjeta, ¿esto es PCI?",
+      "variantes": [
+        "Cobramos con tarjeta, ¿esto es PCI?"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Guardan, procesan o solo transmiten datos de tarjeta?",
+        "¿Quién llena hoy su cuestionario PCI?"
+      ],
+      "di_mejor": "Su cumplimiento depende de cómo use el servicio. Le compartimos la matriz de responsabilidades.",
+      "no_decir": [
+        "Con esto ya son PCI compliant"
+      ],
+      "revisar_legal": true,
+      "fuentes": [
+        "https://www.ey.com/es_mx/technical/tax/boletines-fiscales/nueva-ley-federal-proteccion-datos-personal-posesion-particulares",
+        "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
+        "https://www.littler.com/es/news-analysis/asap/mexico-tiene-nueva-ley-en-materia-de-proteccion-de-datos-personales",
+        "https://aws.amazon.com/financial-services/security-compliance/compliance-center/mx",
+        "https://www.ixopay.com/reports-and-guides/ixopay-pci-dss-v401-shared-responsibility-matrix",
+        "https://services.google.com/fh/files/misc/gcp_pci_dss_v4_responsibility_matrix.pdf"
+      ]
+    },
+    {
+      "id": "OBJ-36",
+      "categoria": "regulacion",
+      "objecion": "El SAT nos pide guardar todo cinco años",
+      "variantes": [
+        "El SAT nos pide guardar todo cinco años",
+        "¿Si cancelo, pierdo mis XML?"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Cuánto tiempo les pide su contador conservarla?",
+        "Si terminaran el contrato, ¿cómo necesitarían recibir la información?"
+      ],
+      "di_mejor": "Los plazos los define su contador; lo que revisamos es que puedan exportar y conservar su información.",
+      "no_decir": [
+        "Cumplimos con el SAT por ustedes",
+        "Con cinco años basta siempre"
+      ],
+      "revisar_legal": true,
+      "fuentes": [
+        "https://www.ey.com/es_mx/technical/tax/boletines-fiscales/nueva-ley-federal-proteccion-datos-personal-posesion-particulares",
+        "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
+        "https://www.littler.com/es/news-analysis/asap/mexico-tiene-nueva-ley-en-materia-de-proteccion-de-datos-personales",
+        "https://aws.amazon.com/financial-services/security-compliance/compliance-center/mx",
+        "https://www.ixopay.com/reports-and-guides/ixopay-pci-dss-v401-shared-responsibility-matrix",
+        "https://services.google.com/fh/files/misc/gcp_pci_dss_v4_responsibility_matrix.pdf"
+      ]
+    },
+    {
+      "id": "OBJ-37",
+      "categoria": "migracion",
+      "objecion": "No podemos parar",
+      "variantes": [
+        "No podemos parar",
+        "Si se cae el sistema, se para la planta"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Qué procesos no pueden detenerse ni un minuto?",
+        "¿Cuánto tiempo sin sistema sería tolerable, siendo realistas?",
+        "¿Hay fechas que debamos evitar, como cierre o temporada alta?"
+      ],
+      "di_mejor": "Normalmente se planea por etapas, empezando por algo no crítico y con plan de regreso.",
+      "no_decir": [
+        "Cero downtime garantizado",
+        "Es un fin de semana y listo"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://anadea.info/blog/cloud-migration-services/",
+        "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
+        "https://cloud.nl/en/knowledge-base/cloud-migration/minimising-downtime-migration/",
+        "https://www.gorelo.io/?p=12415",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf",
+        "https://aws.amazon.com/blogs/aws/now-open-aws-mexico-central-region"
+      ]
+    },
+    {
+      "id": "OBJ-38",
+      "categoria": "migracion",
+      "objecion": "¿Cuánto tiempo estaremos sin servicio?",
+      "variantes": [
+        "¿Cuánto tiempo estaremos sin servicio?"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Qué sistemas le preocupa que se detengan primero?",
+        "En la última actualización grande, ¿cuánto tiempo estuvieron fuera?"
+      ],
+      "di_mejor": "No le quiero dar un número sin ver su ambiente; el especialista le da una estimación por escrito.",
+      "no_decir": [
+        "Cualquier cifra de horas o minutos no validada"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://anadea.info/blog/cloud-migration-services/",
+        "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
+        "https://cloud.nl/en/knowledge-base/cloud-migration/minimising-downtime-migration/",
+        "https://www.gorelo.io/?p=12415",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf",
+        "https://aws.amazon.com/blogs/aws/now-open-aws-mexico-central-region"
+      ]
+    },
+    {
+      "id": "OBJ-39",
+      "categoria": "migracion",
+      "objecion": "Tenemos sistemas viejos sin documentación",
+      "variantes": [
+        "Tenemos sistemas viejos sin documentación",
+        "El que lo hizo ya no trabaja aquí"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Qué sistemas dependen de ese aplicativo?",
+        "¿Quién lo mantiene hoy, aunque sea informalmente?",
+        "¿Les serviría empezar con un diagnóstico?"
+      ],
+      "di_mejor": "Es más común de lo que parece; el primer paso suele ser un levantamiento de qué depende de qué.",
+      "no_decir": [
+        "Eso se migra igual que todo"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://anadea.info/blog/cloud-migration-services/",
+        "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
+        "https://cloud.nl/en/knowledge-base/cloud-migration/minimising-downtime-migration/",
+        "https://www.gorelo.io/?p=12415",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf",
+        "https://aws.amazon.com/blogs/aws/now-open-aws-mexico-central-region"
+      ]
+    },
+    {
+      "id": "OBJ-40",
+      "categoria": "migracion",
+      "objecion": "No tenemos gente para migrar",
+      "variantes": [
+        "No tenemos gente para migrar"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Qué parte de una migración les preocupa más?",
+        "¿Qué ventana de mantenimiento podrían usar?"
+      ],
+      "di_mejor": "La migración la llevamos nosotros, con fecha de corte y operación en paralelo; su equipo valida.",
+      "no_decir": [
+        "Es facilísimo",
+        "No se va a notar nada"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://anadea.info/blog/cloud-migration-services/",
+        "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
+        "https://cloud.nl/en/knowledge-base/cloud-migration/minimising-downtime-migration/",
+        "https://www.gorelo.io/?p=12415",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf",
+        "https://aws.amazon.com/blogs/aws/now-open-aws-mexico-central-region"
+      ]
+    },
+    {
+      "id": "OBJ-41",
+      "categoria": "migracion",
+      "objecion": "¿Se conecta con mi SAP / CONTPAQi / ERP hecho en casa?",
+      "variantes": [
+        "¿Se conecta con mi SAP / CONTPAQi / ERP hecho en casa?"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Qué sistema y qué versión usan?",
+        "¿Qué información necesita moverse y cada cuánto?",
+        "¿Quién administra hoy ese sistema?"
+      ],
+      "di_mejor": "Anoto el sistema y la versión exactos para que el especialista confirme cómo se integra.",
+      "no_decir": [
+        "Se conecta con todo",
+        "Es plug and play"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://anadea.info/blog/cloud-migration-services/",
+        "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
+        "https://cloud.nl/en/knowledge-base/cloud-migration/minimising-downtime-migration/",
+        "https://www.gorelo.io/?p=12415",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf",
+        "https://aws.amazon.com/blogs/aws/now-open-aws-mexico-central-region"
+      ]
+    },
+    {
+      "id": "OBJ-42",
+      "categoria": "migracion",
+      "objecion": "Luego no me puedo salir",
+      "variantes": [
+        "Luego no me puedo salir"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Qué le pasó con el proveedor anterior al querer salirse?",
+        "Si se fuera, ¿en qué formato necesitaría sus datos?"
+      ],
+      "di_mejor": "Revisemos juntos las condiciones de salida y de exportación antes de firmar.",
+      "no_decir": [
+        "Se pueden ir cuando quieran sin costo, salvo que el contrato lo diga"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://anadea.info/blog/cloud-migration-services/",
+        "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
+        "https://cloud.nl/en/knowledge-base/cloud-migration/minimising-downtime-migration/",
+        "https://www.gorelo.io/?p=12415",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf",
+        "https://aws.amazon.com/blogs/aws/now-open-aws-mexico-central-region"
+      ]
+    },
+    {
+      "id": "OBJ-43",
+      "categoria": "migracion",
+      "objecion": "¿Dónde quedan mis datos?",
+      "variantes": [
+        "¿Dónde quedan mis datos?",
+        "¿Se van a Estados Unidos?"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Tienen alguna obligación de mantener datos en México?",
+        "¿Les importa más la ubicación del dato o quién puede accederlo?"
+      ],
+      "di_mejor": "Hoy hay regiones de nube en México; la ubicación exacta depende del servicio y se confirma por escrito.",
+      "no_decir": [
+        "Sus datos nunca salen de México"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://anadea.info/blog/cloud-migration-services/",
+        "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
+        "https://cloud.nl/en/knowledge-base/cloud-migration/minimising-downtime-migration/",
+        "https://www.gorelo.io/?p=12415",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf",
+        "https://aws.amazon.com/blogs/aws/now-open-aws-mexico-central-region"
+      ]
+    },
+    {
+      "id": "OBJ-44",
+      "categoria": "migracion",
+      "objecion": "Todos dicen 99.9% y luego se cae",
+      "variantes": [
+        "Todos dicen 99.9% y luego se cae"
+      ],
+      "detras": null,
+      "preguntas": [
+        "¿Qué pasó con su proveedor actual cuando se cayó?",
+        "¿Qué le importa más: disponibilidad, tiempo de respuesta o compensación?"
+      ],
+      "di_mejor": "Tiene razón en desconfiar del número solo. Revisemos qué mide el SLA, qué excluye y qué pasa si no se cumple.",
+      "no_decir": [
+        "Nunca se cae",
+        "un porcentaje distinto al del contrato"
+      ],
+      "revisar_legal": false,
+      "fuentes": [
+        "https://anadea.info/blog/cloud-migration-services/",
+        "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
+        "https://cloud.nl/en/knowledge-base/cloud-migration/minimising-downtime-migration/",
+        "https://www.gorelo.io/?p=12415",
+        "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf",
+        "https://aws.amazon.com/blogs/aws/now-open-aws-mexico-central-region"
+      ]
+    }
+  ]
+}

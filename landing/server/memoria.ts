@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createAdminClient } from '@insforge/sdk';
 import { claveDePregunta, type Ayuda, type PreguntaLlamada } from './ayuda.ts';
+import type { Objecion } from './objeciones.ts';
 
 export interface ConfigInsforge {
   url?: string;
@@ -204,7 +205,24 @@ export function crearMemoria(config: ConfigInsforge, nombreDeSku: (sku: string) 
     if (r.error) throw new Error(r.error.message);
   }
 
-  return { guardar, recordar, previo, cliente, preguntas, guardarAyuda };
+  /** El banco de objeciones activo (tabla objeciones). */
+  async function objeciones(): Promise<Objecion[]> {
+    const { data, error } = await db
+      .from('objeciones')
+      .select('id, categoria, objecion, variantes, detras, preguntas, di_mejor, no_decir, revisar_legal')
+      .eq('activa', true)
+      .order('id', { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Objecion[];
+  }
+
+  /** Deja constancia de la pregunta de objeción que se le sugirió al vendedor; si ya estaba registrada, no pasa nada. */
+  async function registrarObjecion(llamadaId: string, objecionId: string, pregunta: string) {
+    const r = await db.from('objeciones_llamada').insert([{ llamada_id: llamadaId, objecion_id: objecionId, pregunta }]);
+    if (r.error && !/duplicate|unique|23505/i.test(r.error.message)) throw new Error(r.error.message);
+  }
+
+  return { guardar, recordar, previo, cliente, preguntas, guardarAyuda, objeciones, registrarObjecion };
 }
 
 export type Memoria = NonNullable<ReturnType<typeof crearMemoria>>;

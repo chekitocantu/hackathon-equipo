@@ -57,3 +57,8 @@ El esqueleto del proyecto completo sigue por definir (#2). Lo que ya corre:
   datos y productos detectados, y el tablero muestra en vivo lo que el cliente ya dijo antes y clientes parecidos.
   Solo el servidor (`landing/server/memoria.ts`) habla con InsForge con la API key de admin; las tablas tienen RLS sin
   políticas para que la anon key no lea conversaciones. Esquema en `migrations/`.
+- 2026-10-24 — @brioness47: banco de 44 objeciones (precio, proveedor, timing, evasivas, autoridad, contrato, necesidad,
+  seguridad, regulación en México, migración) en InsForge, tabla `objeciones` (`migrations/20261024231421_banco-de-objeciones.sql`,
+  copia en `objeciones/objeciones.json`). Sale del reporte de investigación de manejo de objeciones. En vivo, Claude solo
+  reconoce qué objeción puso el cliente; la pregunta, el «Di mejor» y el «Evita» salen de la base, la primera que el vendedor
+  no ha hecho en la llamada, y cada sugerencia queda en `objeciones_llamada`. Las de regulación están marcadas para revisión legal.

@@ -14,6 +14,7 @@ import { codigoDeMeet, enviarBot, estadoBot, leerSegmentos, sacarBot, type Confi
 import { crearMemoria, type ConfigInsforge, type Memoria, type Recuerdo } from './memoria.ts';
 import { evaluar, preguntaDelAgente, preguntasDelCliente, type Ayuda, type PreguntaLlamada } from './ayuda.ts';
 import { citaLiteral, recortar, respaldoDe, type Linea } from './citas.ts';
+import { bancoLocal, objecionesParaElPrompt, siguientePregunta, type Objecion } from './objeciones.ts';
 
 const OPENROUTER = 'https://openrouter.ai/api/v1';
 
@@ -55,9 +56,20 @@ const ALUCINACIONES = [/subt[ií]tulos/i, /amara\.org/i, /gracias por ver/i, /su
 
 export function crearApi(config: ConfigApi) {
   const catalogo = JSON.parse(readFileSync(resolve(config.raiz, '../catalogo-simulado/catalogo-simulado.json'), 'utf8')) as Catalogo;
-  const sistema = promptDelAgente(catalogo);
   const nombres = new Map(catalogo.productos.map((p) => [p.sku, p.nombre]));
   const memoria = crearMemoria(config.insforge, (sku) => nombres.get(sku) ?? sku);
+  // El banco arranca con la copia del repo y se reemplaza por el de InsForge en cuanto responde.
+  let banco = bancoLocal(config.raiz);
+  let sistema = promptDelAgente(catalogo, banco);
+  memoria
+    ?.objeciones()
+    .then((deLaBase) => {
+      if (!deLaBase.length) return;
+      banco = deLaBase;
+      sistema = promptDelAgente(catalogo, banco);
+      console.info(`[objeciones] ${banco.length} objeciones cargadas de InsForge`);
+    })
+    .catch((e) => console.warn('[objeciones] InsForge no respondió; se usa objeciones/objeciones.json:', e instanceof Error ? e.message : e));
 
   return async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     if (!req.url?.startsWith('/api/')) return next();
@@ -104,10 +116,10 @@ export function crearApi(config: ConfigApi) {
           llamada?: { id: string; origen: string; codigo?: string };
         };
         if (!memoria || !llamada?.id) {
-          const resultado = await analizar(config, sistema, catalogo, transcripcion, []);
+          const resultado = await analizar(config, sistema, catalogo, banco, transcripcion, []);
           return responder(res, 200, { ...resultado, memoria: null, ayuda: ayudaDe(catalogo, preguntasDelTurno(transcripcion, resultado), resultado) });
         }
-        return responder(res, 200, await analizarConMemoria(config, sistema, catalogo, memoria, llamada, transcripcion));
+        return responder(res, 200, await analizarConMemoria(config, sistema, catalogo, banco, memoria, llamada, transcripcion));
       }
       if (req.method === 'POST' && url.pathname === '/api/brief') {
         const { base, transcripcion } = JSON.parse((await leerCuerpo(req)).toString('utf8')) as { base: BriefBase; transcripcion: Linea[] };
@@ -146,12 +158,13 @@ async function analizarConMemoria(
   config: ConfigApi,
   sistema: string,
   catalogo: Catalogo,
+  banco: Objecion[],
   memoria: Memoria,
   llamada: { id: string; origen: string; codigo?: string },
   transcripcion: { quien: string; texto: string }[],
 ) {
   const recuerdo = recuerdos.get(llamada.id) ?? null;
-  const resultado = await analizar(config, sistema, catalogo, transcripcion, recuerdo?.yaSabemos ?? []);
+  const resultado = await analizar(config, sistema, catalogo, banco, transcripcion, recuerdo?.yaSabemos ?? []);
   const delTurno = preguntasDelTurno(transcripcion, resultado);
   // El conteo técnico solo usa las preguntas del cliente, y la transcripción ya trae todas las de la llamada.
   const ayuda = ayudaDe(catalogo, delTurno, resultado);
@@ -161,6 +174,10 @@ async function analizarConMemoria(
       const clienteId = await memoria.guardar(llamada, transcripcion, resultado);
       await memoria.preguntas(llamada.id, delTurno);
       await memoria.guardarAyuda(llamada.id, ayuda);
+      const sugerida = resultado.pregunta;
+      if (resultado.objecion && sugerida?.texto && sugerida.fuente.startsWith(FUENTE_OBJECIONES)) {
+        await memoria.registrarObjecion(llamada.id, resultado.objecion.id, sugerida.texto);
+      }
       recuerdos.set(llamada.id, await memoria.recordar(llamada.id, clienteId, resultado.industria, resultado.productos.map((p) => p.sku)));
     })
     .catch((e) => console.warn('[memoria] InsForge no respondió:', e instanceof Error ? e.message : e));
@@ -190,6 +207,7 @@ async function analizar(
   config: ConfigApi,
   sistema: string,
   catalogo: Catalogo,
+  banco: Objecion[],
   transcripcion: { quien: string; texto: string }[],
   previo: Recuerdo['yaSabemos'],
 ) {
@@ -214,7 +232,7 @@ async function analizar(
   const texto = String(respuesta.choices?.[0]?.message?.content ?? '');
   const json = texto.slice(texto.indexOf('{'), texto.lastIndexOf('}') + 1);
   try {
-    return validar(JSON.parse(json), catalogo);
+    return conObjecion(validar(JSON.parse(json), catalogo, banco), banco, transcripcion);
   } catch (e) {
     // Si el modelo no devuelve JSON válido, deja rastro para saber por qué (corte por tokens, texto extra…).
     console.warn('[agente] JSON inválido:', {
@@ -228,7 +246,31 @@ async function analizar(
 }
 
 /** Lo que diga el modelo pasa por aquí: solo sobreviven productos y reglas que existen en el catálogo. */
-function validar(crudo: Record<string, unknown>, catalogo: Catalogo) {
+const FUENTE_OBJECIONES = 'Banco de objeciones';
+
+/**
+ * Si el cliente puso una objeción del banco, la pregunta para el vendedor sale de la base: la primera de esa objeción
+ * que todavía no hizo en la llamada, con su «Di mejor» y lo que no debe decir. Si ya las hizo todas, queda la del agente.
+ */
+function conObjecion<T extends { objecionId: string | null; pregunta: { texto: string | null; motivo: string; fuente: string } | null }>(
+  resultado: T,
+  banco: Objecion[],
+  transcripcion: { quien: string; texto: string }[],
+) {
+  const { objecionId, ...resto } = resultado;
+  const o = banco.find((x) => x.id === objecionId);
+  if (!o) return { ...resto, objecion: null };
+  const texto = siguientePregunta(o, transcripcion);
+  return {
+    ...resto,
+    pregunta: texto
+      ? { texto, motivo: `Objeción: «${o.objecion}». Di mejor: «${o.di_mejor}»`, fuente: `${FUENTE_OBJECIONES} · ${o.id}`, cuidado: o.no_decir[0] ?? null }
+      : resto.pregunta,
+    objecion: { id: o.id, categoria: o.categoria, objecion: o.objecion, diMejor: o.di_mejor, noDecir: o.no_decir, revisarLegal: o.revisar_legal },
+  };
+}
+
+function validar(crudo: Record<string, unknown>, catalogo: Catalogo, banco: Objecion[]) {
   const productos = new Map(catalogo.productos.map((p) => [p.sku, p]));
   const reglas = new Set(catalogo.reglas_escalamiento.map((r) => r.id));
   const lista = (x: unknown) => (Array.isArray(x) ? (x as Record<string, unknown>[]) : []);
@@ -256,6 +298,7 @@ function validar(crudo: Record<string, unknown>, catalogo: Catalogo) {
 
   const pregunta = crudo.pregunta as Record<string, unknown> | null;
   return {
+    objecionId: typeof crudo.objecion === 'string' && banco.some((o) => o.id === crudo.objecion) ? crudo.objecion : null,
     empresa: texto(crudo.empresa, 60),
     industria: texto(crudo.industria, 40),
     productos: productosValidos,
@@ -410,7 +453,7 @@ async function redactarBrief(config: ConfigApi, base: BriefBase, transcripcion: 
   };
 }
 
-function promptDelAgente(catalogo: Catalogo) {
+function promptDelAgente(catalogo: Catalogo, banco: Objecion[]) {
   const familias = catalogo.familias.map((f) => `- ${f.id} = ${f.nombre}. Resuelve: ${f.problemas_que_resuelve}`).join('\n');
   const productos = catalogo.productos
     .map((p) =>
@@ -451,6 +494,9 @@ ${paquetes}
 Reglas de escalamiento (cuándo un caso necesita arquitecto de soluciones):
 ${reglas}
 
+OBJECIONES (id [categoría]: cómo suelen decirlo los clientes)
+${objecionesParaElPrompt(banco)}
+
 QUÉ DEVOLVER
 Solo un objeto JSON, sin texto antes ni después, con esta forma:
 {
@@ -459,7 +505,8 @@ Solo un objeto JSON, sin texto antes ni después, con esta forma:
   "productos": [{ "sku": "SIM-...", "estado": "incluido | pendiente | arquitecto | sugerido", "cantidad": 25, "nota": "texto corto" }],
   "reglas": ["ESC-04"],
   "datos": [{ "dato": "Usuarios", "valor": "25 personas" }],
-  "pregunta": { "texto": "...", "motivo": "...", "fuente": "Catálogo · <nombre del producto>" }
+  "pregunta": { "texto": "...", "motivo": "...", "fuente": "Catálogo · <nombre del producto>" },
+  "objecion": "OBJ-01"
 }
 
 REGLAS
@@ -474,6 +521,7 @@ REGLAS
 - "datos": los 3 a 5 datos que más importan para cotizar este caso, con "valor" null si todavía no se sabe. "dato" en máximo 5 palabras.
 - "pregunta": la siguiente pregunta más útil para el vendedor. Primero la que podría cambiar si el caso necesita arquitecto (una regla ESC), luego la que dimensiona (usuarios, TB, servidores). Usa el texto de "preguntas clave" del catálogo cuando aplique y pon en "fuente" "Catálogo · " más el nombre del producto; si la redactas tú, "fuente" es "Agente". "motivo" en máximo 12 palabras. Si ya no falta nada para cotizar, "pregunta" es null.
 - No repitas una pregunta que el vendedor ya hizo y el cliente ya contestó.
+- "objecion": el id de la lista OBJECIONES si en lo último que dijo el cliente aparece esa objeción, aunque la diga con otras palabras; si no puso ninguna o ya se resolvió, null. Solo ids de la lista. Aun así llena "pregunta" como siempre.
 - Todo en español de México.`;
 }
 
