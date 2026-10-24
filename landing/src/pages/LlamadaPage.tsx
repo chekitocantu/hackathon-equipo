@@ -22,8 +22,8 @@ import {
 import { conversacionDeGuion, GUIONES, type Pregunta } from '../lib/casos';
 import type { ProductoEnEtapa } from '../lib/cotizador';
 import { Segmentador, type Segmento } from '../lib/grabador';
-import { useMomentoOportuno } from '../lib/momento';
-import PopupSugerencia from '../components/PopupSugerencia';
+import { useColaSugerencias } from '../lib/momento';
+import PanelSugerencias from '../components/PopupSugerencia';
 
 type Quien = 'Cliente' | 'Vendedor';
 type Fase = 'preparar' | 'conectando' | 'en-llamada' | 'terminada';
@@ -195,11 +195,13 @@ export default function LlamadaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fuente, fase, indiceDemo]);
 
-  // Popup para el vendedor: la pregunta del agente sale solo en un buen momento (pausa, tema o cierre).
-  const momento = useMomentoOportuno(
+  // Panel para el vendedor: las preguntas del agente entran a una cola de 10 solo en un buen momento
+  // (pausa, tema o cierre) y no cambian de texto; el vendedor puede fijar una con un clic.
+  const sugerencias = useColaSugerencias(
     analisis.pregunta,
     intervenciones,
     fase === 'en-llamada',
+    inicio,
     () => fuente?.tipo === 'pestaña' && niveles.current.Cliente > 0.015,
   );
 
@@ -471,17 +473,15 @@ export default function LlamadaPage() {
         />
       )}
 
-      <PopupSugerencia
-        visible={momento.sugerencia !== null && !verTranscripcion}
-        tipo="Pregunta"
-        texto={momento.sugerencia?.texto ?? ''}
-        motivo={momento.sugerencia?.motivo ?? ''}
-        fuente={momento.sugerencia?.fuente ?? ''}
-        oportunidad={momento.sugerencia?.oportunidad ?? ''}
+      <PanelSugerencias
+        visible={sugerencias.items.length > 0 && !verTranscripcion}
+        items={sugerencias.items}
+        fijadaId={sugerencias.fijadaId}
         apilado={apilado}
-        alHacerla={momento.hacerla}
-        alPosponer={momento.posponer}
-        alDescartar={momento.descartar}
+        minimizado={sugerencias.minimizado}
+        alMinimizar={sugerencias.alternarMinimizado}
+        alClicItem={sugerencias.alternarFijada}
+        alMarcarHecha={sugerencias.marcarHecha}
       />
     </div>
   );

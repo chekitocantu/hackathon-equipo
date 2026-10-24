@@ -1,13 +1,10 @@
-// Decide cuándo mostrarle al vendedor la sugerencia del agente sin interrumpir: nunca mientras el cliente habla,
-// sí en una pausa, cuando el cliente toca el tema de la pregunta o cuando la plática va hacia el cierre.
-// Se quita sola cuando el agente ya no la pide (porque se contestó) o cuando el vendedor ya la hizo.
+// Cola de sugerencias para el vendedor. Las preguntas del agente cambian mientras el cliente habla; para no marear,
+// cada pregunta nueva entra a una lista (las últimas 10) solo en un buen momento: nunca mientras el cliente habla,
+// sí en una pausa, cuando el cliente toca el tema o cuando la plática va hacia el cierre. Lo que entra ya no cambia
+// de texto. El vendedor puede fijar una (clic) y soltarla (otro clic); se marca sola como hecha cuando la pregunta.
 import { useEffect, useRef, useState } from 'react';
 import type { Pregunta } from './casos';
-
-export interface Sugerencia extends Pregunta {
-  /** Por qué aparece justo ahora, para que el vendedor entienda el momento. */
-  oportunidad: string;
-}
+import type { ItemSugerencia } from '../components/PopupSugerencia';
 
 interface Frase {
   quien: 'Cliente' | 'Vendedor';
@@ -15,12 +12,12 @@ interface Frase {
 }
 
 const CADA_MS = 400;
+const MAXIMO_EN_COLA = 10;
 const PAUSA_MS = 3500;           // silencio que cuenta como pausa en la plática
 const VENDEDOR_HABLANDO_MS = 2500; // tras una frase del vendedor, se le deja terminar
 const TEMA_MS = 1200;            // el cliente tocó el tema: se espera a que acabe la frase
 const CIERRE_MS = 800;
-const MAXIMO_PENDIENTE_MS = 45_000; // si nunca hubo momento, se muestra en la primera calma
-const POSPONER_MS = 30_000;
+const MAXIMO_PENDIENTE_MS = 45_000; // si nunca hubo momento, entra en la primera calma
 
 // Solo frases de despedida o de "ya terminamos"; "cotización" o "propuesta" salen desde el inicio y no cuentan.
 // "¿Algo más?" solo cuenta como pregunta al final ("queremos algo más seguro" no es cierre).
@@ -43,8 +40,7 @@ function claves(texto: string): string[] {
 function temaEnComun(pregunta: string, frase: string): string | null {
   const dePregunta = normalizar(pregunta).match(/[a-z0-9]+/g) ?? [];
   const deFrase = new Set(claves(frase));
-  const palabra = dePregunta.find((p) => p.length >= 5 && !VACIAS.has(p) && deFrase.has(p.slice(0, 5)));
-  return palabra ?? null;
+  return dePregunta.find((p) => p.length >= 5 && !VACIAS.has(p) && deFrase.has(p.slice(0, 5))) ?? null;
 }
 
 /** El agente reescribe la misma pregunta entre análisis ("¿…equipos tienen?" / "¿…equipos?"): cuenta como la misma. */
@@ -67,92 +63,130 @@ function yaLaHizo(pregunta: string, frase: string): boolean {
   return coinciden >= Math.min(2, deseadas.length) && coinciden / deseadas.length >= 0.5;
 }
 
+const reloj = (ms: number) => {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+};
+
 /**
  * @param pregunta lo que el agente sugiere preguntar ahora (o null si ya no falta nada).
  * @param frases la conversación hasta ahora.
  * @param activa si la llamada está en curso.
+ * @param inicioLlamada Date.now() de cuando empezó la llamada, para la hora de cada sugerencia.
  * @param clienteHablando opcional: true si en este instante hay voz del cliente (medidor de audio).
  */
-export function useMomentoOportuno(
+export function useColaSugerencias(
   pregunta: Pregunta | null,
   frases: Frase[],
   activa: boolean,
+  inicioLlamada: number,
   clienteHablando?: () => boolean,
 ) {
-  const [mostrada, setMostrada] = useState<Sugerencia | null>(null);
+  const [items, setItems] = useState<ItemSugerencia[]>([]);
+  const [fijadaId, setFijadaId] = useState<string | null>(null);
+  const [minimizado, setMinimizado] = useState(false);
   const estado = useRef({
     pregunta,
     clienteHablando,
+    inicioLlamada,
+    items: [] as ItemSugerencia[],
+    fijadaId: null as string | null,
     vistas: 0,
+    revisadas: 0,
     ultimaLlegada: Date.now(),
     ultima: null as Frase | null,
-    mostradaEn: 0,
+    frases: [] as Frase[],
     candidata: '',
     pendienteDesde: Date.now(),
-    hechas: [] as string[],
-    pospuestas: [] as { texto: string; hasta: number }[],
-    mostrada: null as Sugerencia | null,
+    siguienteId: 1,
   });
   const e = estado.current;
   e.pregunta = pregunta;
   e.clienteHablando = clienteHablando;
-  e.mostrada = mostrada;
+  e.inicioLlamada = inicioLlamada;
+  e.items = items;
+  e.fijadaId = fijadaId;
+  e.frases = frases;
 
   // Hora en que llegó cada frase nueva: sirve para medir pausas aunque la fuente solo mande texto.
   if (frases.length !== e.vistas) {
-    if (frases.length < e.vistas) {
-      // Llamada nueva: se olvida todo lo anterior.
-      e.hechas = [];
-      e.pospuestas = [];
-      e.candidata = '';
-    }
+    if (frases.length < e.vistas) e.revisadas = 0; // llamada nueva
     e.vistas = frases.length;
     e.ultima = frases[frases.length - 1] ?? null;
     e.ultimaLlegada = Date.now();
   }
 
+  // Llamada nueva (la conversación se vació): se limpia la cola.
   useEffect(() => {
-    if (!activa) {
-      setMostrada(null);
-      return;
+    if (frases.length === 0) {
+      setItems([]);
+      setFijadaId(null);
+      e.candidata = '';
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frases.length === 0]);
+
+  useEffect(() => {
+    if (!activa) return;
     const t = window.setInterval(() => {
       const ahora = Date.now();
       const p = e.pregunta;
+      let lista = e.items;
 
-      if (e.mostrada) {
+      // 1. Lo que el vendedor dijo desde la última revisión marca como hechas las preguntas que ya hizo.
+      for (let i = e.revisadas; i < e.frases.length; i++) {
+        const f = e.frases[i];
+        if (f.quien !== 'Vendedor') continue;
+        lista = lista.map((it) => (!it.hecha && yaLaHizo(it.texto, f.texto) ? { ...it, hecha: true } : it));
+      }
+      e.revisadas = e.frases.length;
+
+      // 2. "Ahora" = la que el agente sigue pidiendo en este momento.
+      lista = lista.map((it) => {
+        const actual = !!p && misma(it.texto, p.texto);
+        return actual === it.actual ? it : { ...it, actual };
+      });
+
+      // 3. ¿Entra una pregunta nueva? Solo si no está ya en la cola y es buen momento.
+      if (p && !lista.some((it) => misma(it.texto, p.texto))) {
+        if (!e.candidata || !misma(e.candidata, p.texto)) {
+          e.candidata = p.texto;
+          e.pendienteDesde = ahora;
+        }
+        const desde = ahora - e.ultimaLlegada;
         const ultima = e.ultima;
-        const hecha = ultima?.quien === 'Vendedor' && e.ultimaLlegada > e.mostradaEn && yaLaHizo(e.mostrada.texto, ultima.texto);
-        if (hecha) e.hechas.push(e.mostrada.texto);
-        // Se quita si el vendedor ya la hizo o si el agente dejó de pedirla (ya se contestó o pasó a otra).
-        if (hecha || !p || !misma(e.mostrada.texto, p.texto)) setMostrada(null);
-        // Misma pregunta con otras palabras: se queda abierta y se actualiza el texto.
-        else if (p.texto !== e.mostrada.texto) setMostrada({ ...p, oportunidad: e.mostrada.oportunidad });
-        return;
+        const ocupado = e.clienteHablando?.() || (ultima?.quien === 'Vendedor' && desde < VENDEDOR_HABLANDO_MS);
+        let oportunidad: string | null = null;
+        if (!ocupado) {
+          const tema = ultima?.quien === 'Cliente' ? temaEnComun(p.texto, ultima.texto) : null;
+          if (ultima && CIERRE.test(ultima.texto) && desde > CIERRE_MS) oportunidad = 'Antes de cerrar la plática';
+          else if (tema && desde > TEMA_MS) oportunidad = `El cliente habló de "${tema}"`;
+          else if (ultima && desde > PAUSA_MS) oportunidad = 'Hubo una pausa en la plática';
+          else if (ahora - e.pendienteDesde > MAXIMO_PENDIENTE_MS && desde > 1500) oportunidad = 'Sigue pendiente';
+        }
+        if (oportunidad) {
+          const nuevo: ItemSugerencia = {
+            id: String(e.siguienteId++),
+            texto: p.texto,
+            motivo: p.motivo,
+            fuente: p.fuente,
+            oportunidad,
+            hora: reloj(ahora - e.inicioLlamada),
+            hecha: false,
+            actual: true,
+          };
+          lista = [nuevo, ...lista.map((it) => (it.actual ? { ...it, actual: false } : it))];
+          // Se queda con las 10 más nuevas, pero la fijada nunca se va.
+          while (lista.length > MAXIMO_EN_COLA) {
+            const i = lista.map((it) => it.id !== e.fijadaId).lastIndexOf(true);
+            lista = lista.filter((_, j) => j !== i);
+          }
+        }
       }
 
-      if (!p || e.hechas.some((h) => misma(h, p.texto))) return;
-      if (e.pospuestas.some((x) => x.hasta > ahora && misma(x.texto, p.texto))) return;
-      if (!e.candidata || !misma(e.candidata, p.texto)) {
-        e.candidata = p.texto;
-        e.pendienteDesde = ahora;
-      }
-
-      const desde = ahora - e.ultimaLlegada;
-      const ultima = e.ultima;
-      if (e.clienteHablando?.()) return;
-      if (ultima?.quien === 'Vendedor' && desde < VENDEDOR_HABLANDO_MS) return;
-
-      let oportunidad: string | null = null;
-      const tema = ultima?.quien === 'Cliente' ? temaEnComun(p.texto, ultima.texto) : null;
-      if (ultima && CIERRE.test(ultima.texto) && desde > CIERRE_MS) oportunidad = 'Antes de cerrar la plática';
-      else if (tema && desde > TEMA_MS) oportunidad = `El cliente habló de "${tema}"`;
-      else if (ultima && desde > PAUSA_MS) oportunidad = 'Hubo una pausa en la plática';
-      else if (ahora - e.pendienteDesde > MAXIMO_PENDIENTE_MS && desde > 1500) oportunidad = 'Sigue pendiente';
-
-      if (oportunidad) {
-        e.mostradaEn = ahora;
-        setMostrada({ ...p, oportunidad });
+      if (lista !== e.items && JSON.stringify(lista) !== JSON.stringify(e.items)) {
+        e.items = lista;
+        setItems(lista);
       }
     }, CADA_MS);
     return () => window.clearInterval(t);
@@ -160,17 +194,13 @@ export function useMomentoOportuno(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activa]);
 
-  const cerrar = (como: 'hecha' | 'pospuesta') => {
-    if (!mostrada) return;
-    if (como === 'hecha') e.hechas.push(mostrada.texto);
-    else e.pospuestas.push({ texto: mostrada.texto, hasta: Date.now() + POSPONER_MS });
-    setMostrada(null);
-  };
-
   return {
-    sugerencia: mostrada,
-    hacerla: () => cerrar('hecha'),
-    posponer: () => cerrar('pospuesta'),
-    descartar: () => cerrar('hecha'),
+    items,
+    fijadaId,
+    minimizado,
+    /** Clic en una pregunta: la fija; clic otra vez: la suelta. */
+    alternarFijada: (id: string) => setFijadaId((actual) => (actual === id ? null : id)),
+    marcarHecha: (id: string) => setItems((lista) => lista.map((it) => (it.id === id ? { ...it, hecha: true } : it))),
+    alternarMinimizado: () => setMinimizado((m) => !m),
   };
 }
