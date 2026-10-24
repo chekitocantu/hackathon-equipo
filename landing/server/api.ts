@@ -186,27 +186,48 @@ async function analizar(
         .map((d) => `- ${d.etiqueta}: ${d.valor} (${d.fecha})`)
         .join('\n')}\n\n`
     : '';
-  const respuesta = await llamar(config, '/chat/completions', {
-    model: config.modeloAgente,
-    temperature: 0.2,
-    // Sin razonamiento interno: Haiku se gastaba los tokens "pensando" y el JSON llegaba cortado (finish_reason=length).
-    reasoning: { enabled: false },
-    max_tokens: 2500,
-    messages: [
-      // El catálogo es igual en cada llamada; se marca para caché y así cada turno responde más rápido.
-      { role: 'system', content: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }] },
-      { role: 'user', content: `${antes}Transcripción de la videollamada hasta ahora:\n\n${conversacion}\n\nDevuelve solo el JSON.` },
-    ],
-  });
-  const texto = String(respuesta.choices?.[0]?.message?.content ?? '');
-  const json = texto.slice(texto.indexOf('{'), texto.lastIndexOf('}') + 1);
-  try {
-    return validar(JSON.parse(json), catalogo);
-  } catch (e) {
-    const fin = (respuesta.choices?.[0] as { finish_reason?: string } | undefined)?.finish_reason;
-    console.warn(`[agente] JSON inválido (finish_reason=${fin}, ${texto.length} caracteres): ${texto.slice(0, 160)}`);
-    throw e;
+  const mensajes: { role: string; content: unknown }[] = [
+    // El catálogo es igual en cada llamada; se marca para caché y así cada turno responde más rápido.
+    { role: 'system', content: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }] },
+    { role: 'user', content: `${antes}Transcripción de la videollamada hasta ahora:\n\n${conversacion}\n\nDevuelve solo el JSON.` },
+  ];
+
+  // Los modelos rápidos a veces dejan el JSON mal formado (una coma o una comilla de más).
+  // Si pasa, se le muestra el error y se le pide que lo corrija una vez antes de rendirse.
+  for (let intento = 1; ; intento++) {
+    const respuesta = await llamar(config, '/chat/completions', {
+      model: config.modeloAgente,
+      temperature: 0.2,
+      // Sin razonamiento interno: Haiku se gastaba los tokens "pensando" y el JSON llegaba cortado (finish_reason=length).
+      reasoning: { enabled: false },
+      max_tokens: 2500,
+      messages: mensajes,
+    });
+    const texto = String(respuesta.choices?.[0]?.message?.content ?? '');
+    try {
+      return validar(leerJson(texto), catalogo);
+    } catch (e) {
+      if (intento >= 2) throw new Error(`El agente regresó una respuesta que no se pudo leer (${e instanceof Error ? e.message : e})`);
+      const fin = (respuesta.choices?.[0] as { finish_reason?: string } | undefined)?.finish_reason;
+      console.warn(`[agente] JSON mal formado (finish_reason=${fin}), se pide corrección:`, e instanceof Error ? e.message : e);
+      mensajes.push(
+        { role: 'assistant', content: texto },
+        {
+          role: 'user',
+          content: `Ese JSON no es válido (${e instanceof Error ? e.message : e}). Devuelve el mismo contenido como JSON válido: comillas dobles escapadas dentro de los textos, sin comas sobrantes y sin texto fuera del objeto.`,
+        },
+      );
+    }
   }
+}
+
+/** Saca el objeto JSON de la respuesta y arregla los descuidos más comunes antes de leerlo. */
+function leerJson(texto: string): Record<string, unknown> {
+  const json = texto
+    .slice(texto.indexOf('{'), texto.lastIndexOf('}') + 1)
+    .replace(/[“”]/g, '"')
+    .replace(/,\s*([}\]])/g, '$1');
+  return JSON.parse(json);
 }
 
 /** Lo que diga el modelo pasa por aquí: solo sobreviven productos y reglas que existen en el catálogo. */
