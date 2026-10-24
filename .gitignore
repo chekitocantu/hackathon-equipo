@@ -30,3 +30,17 @@ Thumbs.db
 
 # Materiales del patrocinador que no se pueden publicar
 datos-privados/
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf
