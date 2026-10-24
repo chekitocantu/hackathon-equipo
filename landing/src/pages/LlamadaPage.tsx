@@ -22,6 +22,8 @@ import {
 import { conversacionDeGuion, GUIONES, type Pregunta } from '../lib/casos';
 import type { ProductoEnEtapa } from '../lib/cotizador';
 import { Segmentador, type Segmento } from '../lib/grabador';
+import { useMomentoOportuno } from '../lib/momento';
+import PopupSugerencia from '../components/PopupSugerencia';
 
 type Quien = 'Cliente' | 'Vendedor';
 type Fase = 'preparar' | 'conectando' | 'en-llamada' | 'terminada';
@@ -192,6 +194,14 @@ export default function LlamadaPage() {
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fuente, fase, indiceDemo]);
+
+  // Popup para el vendedor: la pregunta del agente sale solo en un buen momento (pausa, tema o cierre).
+  const momento = useMomentoOportuno(
+    analisis.pregunta,
+    intervenciones,
+    fase === 'en-llamada',
+    () => fuente?.tipo === 'pestaña' && niveles.current.Cliente > 0.015,
+  );
 
   /** Recibe la conversación completa de cualquier fuente; si cambió algo, el agente la vuelve a leer. */
   function recibir(lista: Intervencion[]) {
@@ -460,6 +470,19 @@ export default function LlamadaPage() {
           }
         />
       )}
+
+      <PopupSugerencia
+        visible={momento.sugerencia !== null && !verTranscripcion}
+        tipo="Pregunta"
+        texto={momento.sugerencia?.texto ?? ''}
+        motivo={momento.sugerencia?.motivo ?? ''}
+        fuente={momento.sugerencia?.fuente ?? ''}
+        oportunidad={momento.sugerencia?.oportunidad ?? ''}
+        apilado={apilado}
+        alHacerla={momento.hacerla}
+        alPosponer={momento.posponer}
+        alDescartar={momento.descartar}
+      />
     </div>
   );
 }
