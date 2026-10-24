@@ -4,7 +4,7 @@
 
 Cómo habla el cerebro del Traductor con cada área: tono, palabras, tecnicismos y formato de cada mensaje.
 Por ahora cubre dos áreas: **Ventas** (vendedores) e **IT** (arquitectos de soluciones e ingenieros).
-Los ejemplos usan el `catalogo-simulado/`. Finanzas se agrega después con las mismas reglas.
+Los ejemplos usan el `catalogo-simulado/`. 
 
 ## La idea en una línea
 Ventas habla de **problemas del cliente**; IT habla de **parámetros**. El Traductor convierte cada frase del cliente en
