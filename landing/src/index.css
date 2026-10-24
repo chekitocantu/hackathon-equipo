@@ -3,7 +3,7 @@
   --text-main: #f0f6ff;
   --text-muted: #8899b4;
 
-  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-sans: 'Aileron', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
