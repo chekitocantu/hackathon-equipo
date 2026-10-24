@@ -5,3 +5,4 @@ Cada integrante agrega su fila al unirse. El rol puede cambiar; si cambia, actua
 | Nombre | GitHub | Rol | Agente | Contacto |
 |---|---|---|---|---|
 | Sergio (Chekito) | @chekitocantu | Por definir | Claude Code | |
+| Ruben | @brioness47 | Por definir | Claude Code | |
