@@ -22,13 +22,18 @@ import {
 import type { Ayuda } from '../lib/ayuda';
 import { conversacionDeGuion, GUIONES, type Pregunta } from '../lib/casos';
 import { informacionQueFalta } from '../lib/catalogo';
-import type { ProductoEnEtapa } from '../lib/cotizador';
+import { fusionarProductos, type ProductoEnEtapa } from '../lib/cotizador';
 import { Segmentador, type Segmento } from '../lib/grabador';
 import { useColaSugerencias } from '../lib/momento';
 import PanelSugerencias from '../components/PopupSugerencia';
+import PanelPerfil, { TiraPerfil } from '../components/PanelPerfil';
+import Traductor from '../components/Traductor';
+import { PERFIL_VACIO, perfilComoTexto, PREGUNTAS_PERFIL, type Perfil } from '../lib/perfil';
 
 type Quien = 'Cliente' | 'Vendedor';
 type Fase = 'preparar' | 'conectando' | 'en-llamada' | 'terminada';
+/** Dentro de la llamada: primero se perfila al cliente y después se cotiza. */
+type Etapa = 'perfil' | 'cotizacion';
 
 /** De dónde sale la conversación. El tablero y el agente son los mismos para las tres. */
 type Fuente =
@@ -127,9 +132,19 @@ export default function LlamadaPage() {
   const [inicio, setInicio] = useState(0);
   const [ahora, setAhora] = useState(Date.now());
   const [indiceDemo, setIndiceDemo] = useState(0);
-  const [verTranscripcion, setVerTranscripcion] = useState(false);
+  // Qué ocupa el cuerpo de la página: el tablero, la transcripción o el Traductor para las áreas (al terminar).
+  const [vista, setVista] = useState<'tablero' | 'transcripcion' | 'traductor'>('tablero');
+  const verTranscripcion = vista === 'transcripcion';
+  const verTraductor = vista === 'traductor';
   // Cada pregunta que el agente sugirió en la llamada: cuentan para el algoritmo de ayuda de IT.
   const [sugeridas, setSugeridas] = useState<string[]>([]);
+  const [etapa, setEtapa] = useState<Etapa>('perfil');
+  const [perfil, setPerfil] = useState<Perfil>(PERFIL_VACIO);
+  // false desde que se pasa a cotización hasta que llega (o falla) el primer análisis: mientras, se ve "Cargando cotización".
+  const [cotizacionLista, setCotizacionLista] = useState(false);
+  // El análisis corre en callbacks; con refs siempre ve la etapa y el perfil actuales.
+  const etapaRef = useRef<Etapa>('perfil');
+  const perfilRef = useRef<Perfil>(PERFIL_VACIO);
 
   const recursos = useRef<{ segmentadores: Segmentador[]; pistas: MediaStreamTrack[] }>({ segmentadores: [], pistas: [] });
   const niveles = useRef<Record<Quien, number>>({ Cliente: 0, Vendedor: 0 });
@@ -223,8 +238,14 @@ export default function LlamadaPage() {
 
   // Panel para el vendedor: las preguntas del agente entran a una cola de 10 solo en un buen momento
   // (pausa, tema o cierre) y no cambian de texto; el vendedor puede fijar una con un clic.
+  // En la fase de perfil la sugerencia es la siguiente pregunta de perfil; después, la del copiloto.
+  const preguntaPerfil = PREGUNTAS_PERFIL.find((p) => p.id === perfil.siguiente);
   const sugerencias = useColaSugerencias(
-    analisis.pregunta,
+    etapa === 'perfil'
+      ? preguntaPerfil
+        ? { texto: preguntaPerfil.texto, motivo: preguntaPerfil.revela, fuente: 'Perfil del cliente' }
+        : null
+      : analisis.pregunta,
     intervenciones,
     fase === 'en-llamada',
     inicio,
@@ -251,16 +272,30 @@ export default function LlamadaPage() {
     setAnalizando(true);
     // Si en lo que responde el agente empieza otra llamada, su respuesta ya no aplica.
     const id = llamadaId.current;
+    const deCotizacion = etapaRef.current === 'cotizacion';
     try {
+      const transcripcion = conversacion.current.map(({ quien, texto }) => ({ quien, texto }));
+      // Fase 1: el agente de perfil llena las 10 preguntas; todavía no se cotiza.
+      if (etapaRef.current === 'perfil') {
+        const nuevo = await pedir<Perfil>('/api/perfil', enviarJson({ transcripcion }));
+        if (id === llamadaId.current && etapaRef.current === 'perfil') {
+          perfilRef.current = nuevo;
+          setPerfil(nuevo);
+        }
+        setAviso(null);
+        return;
+      }
       const resultado = await pedir<Analisis>(
         '/api/analizar',
         enviarJson({
-          transcripcion: conversacion.current.map(({ quien, texto }) => ({ quien, texto })),
+          transcripcion,
           llamada: datosDeLlamada(),
+          perfil: perfilComoTexto(perfilRef.current) || undefined,
         }),
       );
       if (id !== llamadaId.current) return;
-      setAnalisis(resultado);
+      // El mapa solo avanza: se junta con lo que ya se mostró para que no cambie a cada respuesta del agente.
+      setAnalisis((anterior) => ({ ...resultado, productos: fusionarProductos(anterior.productos, resultado.productos) }));
       const nueva = resultado.pregunta?.texto;
       if (nueva) setSugeridas((s) => (s.includes(nueva) ? s : [...s, nueva]));
       setAviso(null);
@@ -277,6 +312,7 @@ export default function LlamadaPage() {
     } finally {
       cola.current.corriendo = false;
       setAnalizando(false);
+      if (deCotizacion) setCotizacionLista(true);
       if (cola.current.otraVez) {
         cola.current.otraVez = false;
         void analizar();
@@ -324,8 +360,20 @@ export default function LlamadaPage() {
     };
   }
 
+  /** Termina la fase de perfil (con su análisis o saltándola) y arranca el tablero de cotización. */
+  function pasarACotizacion() {
+    etapaRef.current = 'cotizacion';
+    setCotizacionLista(false);
+    setEtapa('cotizacion');
+    void analizar();
+  }
+
   function reiniciar(nueva: Fuente) {
     llamadaId.current = crypto.randomUUID();
+    etapaRef.current = 'perfil';
+    perfilRef.current = PERFIL_VACIO;
+    setEtapa('perfil');
+    setPerfil(PERFIL_VACIO);
     conversacion.current = [];
     firma.current = '';
     setIntervenciones([]);
@@ -335,7 +383,7 @@ export default function LlamadaPage() {
     setError(null);
     setEstadoBot(null);
     setIndiceDemo(0);
-    setVerTranscripcion(false);
+    setVista('tablero');
     setFuente(nueva);
   }
 
@@ -494,7 +542,8 @@ export default function LlamadaPage() {
           <h1 style={{ margin: '2px 0 0', fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.1 }}>{titulo}</h1>
           <p style={{ margin: '3px 0 0', fontSize: '0.92rem', color: SECUNDARIO, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
             {fase === 'en-llamada' && <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: ROJO }} />}
-            {fase === 'en-llamada' ? etiquetaFuente : 'Llamada terminada'} · {reloj(ahora - inicio)}
+            {fase === 'en-llamada' ? etiquetaFuente : 'Llamada terminada'} · {etapa === 'perfil' ? 'Fase 1: perfil' : 'Fase 2: cotización'} ·{' '}
+            {reloj(ahora - inicio)}
             {fase === 'en-llamada' && ultimaFrase && ` · último texto hace ${Math.max(0, Math.round((ahora - inicio - ultimaFrase.inicio) / 1000))} s`}
             {analizando && <span style={{ color: AZUL_TEXTO }}>· El agente está pensando…</span>}
           </p>
@@ -524,10 +573,22 @@ export default function LlamadaPage() {
             </button>
           ) : (
             <>
-              <button style={botonTexto} onClick={() => setVerTranscripcion((v) => !v)}>
-                {verTranscripcion ? 'Ver tablero' : 'Ver transcripción'}
-              </button>
-              <button style={botonPrimario} onClick={() => setFase('preparar')}>
+              {vista !== 'tablero' && (
+                <button style={botonTexto} onClick={() => setVista('tablero')}>
+                  Ver tablero
+                </button>
+              )}
+              {vista !== 'transcripcion' && (
+                <button style={botonTexto} onClick={() => setVista('transcripcion')}>
+                  Ver transcripción
+                </button>
+              )}
+              {vista !== 'traductor' && (
+                <button style={botonPrimario} onClick={() => setVista('traductor')}>
+                  Traducir para las áreas
+                </button>
+              )}
+              <button style={{ ...botonTexto, color: SECUNDARIO }} onClick={() => setFase('preparar')}>
                 Nueva llamada
               </button>
             </>
@@ -535,10 +596,32 @@ export default function LlamadaPage() {
         </div>
       </header>
 
-      {!verTranscripcion && analisis.memoria && <PanelMemoria memoria={analisis.memoria} apilado={apilado} />}
+      {vista === 'tablero' && etapa === 'cotizacion' && <TiraPerfil perfil={perfil} />}
+      {vista === 'tablero' && etapa === 'cotizacion' && analisis.memoria && <PanelMemoria memoria={analisis.memoria} apilado={apilado} />}
 
       {verTranscripcion ? (
         <Transcripcion intervenciones={intervenciones} />
+      ) : verTraductor ? (
+        <Traductor
+          empresa={titulo === 'Llamada en vivo' ? null : titulo}
+          productos={analisis.productos}
+          reglas={analisis.reglas}
+          datos={analisis.datos}
+          perfil={perfil}
+          conversacion={intervenciones.map(({ quien, texto }) => ({ quien, texto }))}
+        />
+      ) : etapa === 'perfil' ? (
+        <PanelPerfil
+          perfil={perfil}
+          apilado={apilado}
+          mensaje={{
+            rotulo: ultimoCliente ? `${ultimoCliente.hablante} · ${reloj(ultimoCliente.inicio)}` : 'Cliente',
+            texto: ultimoCliente?.texto ?? null,
+            vacio: fase === 'en-llamada' ? 'Escuchando al cliente… empieza por entender qué pasó.' : 'El cliente no habló durante la llamada.',
+          }}
+          alAnalizar={pasarACotizacion}
+          alSaltar={pasarACotizacion}
+        />
       ) : (
         <Tablero
           apilado={apilado}
@@ -555,6 +638,8 @@ export default function LlamadaPage() {
           preguntasSugeridas={sugeridas}
           ayuda={analisis.ayuda}
           cliente={clienteDeLlamada()}
+          cargando={!cotizacionLista}
+          actualizando={analizando}
           esperando={
             intervenciones.length === 0
               ? 'La primera pregunta aparece cuando el cliente cuente su problema.'
@@ -564,7 +649,7 @@ export default function LlamadaPage() {
       )}
 
       <PanelSugerencias
-        visible={sugerencias.items.length > 0 && !verTranscripcion}
+        visible={sugerencias.items.length > 0 && vista === 'tablero'}
         items={sugerencias.items}
         fijadaId={sugerencias.fijadaId}
         apilado={apilado}

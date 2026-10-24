@@ -15,6 +15,9 @@ import { crearMemoria, type ConfigInsforge, type Memoria, type Recuerdo } from '
 import { evaluar, preguntaDelAgente, preguntasDelCliente, type Ayuda, type PreguntaLlamada } from './ayuda.ts';
 import { citaLiteral, recortar, respaldoDe, type Linea } from './citas.ts';
 import { bancoLocal, objecionesParaElPrompt, siguientePregunta, type Objecion } from './objeciones.ts';
+import { BLOQUES, PREGUNTAS_PERFIL, type NivelTecnico, type Perfil } from '../src/lib/perfil.ts';
+import { contextoTraductor, promptsTraductor, validarFinanzas, validarIT, validarVentas } from './traductor.ts';
+import type { EntradaTraductor } from '../src/lib/traductor.ts';
 
 const OPENROUTER = 'https://openrouter.ai/api/v1';
 
@@ -56,6 +59,15 @@ const ALUCINACIONES = [/subt[ií]tulos/i, /amara\.org/i, /gracias por ver/i, /su
 
 export function crearApi(config: ConfigApi) {
   const catalogo = JSON.parse(readFileSync(resolve(config.raiz, '../catalogo-simulado/catalogo-simulado.json'), 'utf8')) as Catalogo;
+  const sistemaPerfil = promptDelPerfil(catalogo);
+  // La guía de lenguaje del equipo (Rubén) define cómo le habla el Traductor a cada área; si no está, se sigue sin ella.
+  let guia = '';
+  try {
+    guia = readFileSync(resolve(config.raiz, '../notas/lenguaje-traductor.md'), 'utf8');
+  } catch {
+    console.warn('[traductor] No encontré notas/lenguaje-traductor.md; el Traductor sigue sin la guía.');
+  }
+  const sistemasTraductor = promptsTraductor(guia);
   const nombres = new Map(catalogo.productos.map((p) => [p.sku, p.nombre]));
   const memoria = crearMemoria(config.insforge, (sku) => nombres.get(sku) ?? sku);
   // El banco arranca con la copia del repo y se reemplaza por el de InsForge en cuanto responde.
@@ -110,16 +122,56 @@ export function crearApi(config: ConfigApi) {
         const audio = await leerCuerpo(req);
         return responder(res, 200, { texto: await transcribir(config, audio) });
       }
+      if (req.method === 'POST' && req.url.startsWith('/api/traducir')) {
+        const entrada = JSON.parse((await leerCuerpo(req)).toString('utf8')) as EntradaTraductor;
+        const contexto = contextoTraductor(entrada, catalogo);
+        const pedir = <T>(sistemaArea: string, validarArea: (crudo: Record<string, unknown>) => T) =>
+          pedirJson(
+            config,
+            [
+              { role: 'system', content: [{ type: 'text', text: sistemaArea, cache_control: { type: 'ephemeral' } }] },
+              { role: 'user', content: `${contexto}\n\nDevuelve solo el JSON.` },
+            ],
+            validarArea,
+          );
+        // Las tres áreas van en paralelo: tarda lo que tarde la más lenta, no la suma.
+        const [ventas, it, finanzas] = await Promise.allSettled([
+          pedir(sistemasTraductor.ventas, validarVentas),
+          pedir(sistemasTraductor.it, validarIT),
+          pedir(sistemasTraductor.finanzas, validarFinanzas),
+        ]);
+        const errores = [
+          ['Ventas', ventas],
+          ['IT', it],
+          ['Finanzas', finanzas],
+        ]
+          .filter(([, r]) => (r as PromiseSettledResult<unknown>).status === 'rejected')
+          .map(([area, r]) => `${area}: ${String((r as PromiseRejectedResult).reason?.message ?? (r as PromiseRejectedResult).reason)}`);
+        return responder(res, 200, {
+          ventas: ventas.status === 'fulfilled' ? ventas.value : null,
+          it: it.status === 'fulfilled' ? it.value : null,
+          finanzas: finanzas.status === 'fulfilled' ? finanzas.value : null,
+          errores,
+        });
+      }
+      if (req.method === 'POST' && req.url.startsWith('/api/perfil')) {
+        const { transcripcion } = JSON.parse((await leerCuerpo(req)).toString('utf8')) as {
+          transcripcion: { quien: string; texto: string }[];
+        };
+        return responder(res, 200, await analizarPerfil(config, sistemaPerfil, catalogo, transcripcion));
+      }
       if (req.method === 'POST' && req.url.startsWith('/api/analizar')) {
-        const { transcripcion, llamada } = JSON.parse((await leerCuerpo(req)).toString('utf8')) as {
+        const { transcripcion, llamada, perfil } = JSON.parse((await leerCuerpo(req)).toString('utf8')) as {
           transcripcion: { quien: string; texto: string }[];
           llamada?: { id: string; origen: string; codigo?: string };
+          /** Perfil capturado en la primera fase, ya como texto (src/lib/perfil.ts → perfilComoTexto). */
+          perfil?: string;
         };
         if (!memoria || !llamada?.id) {
-          const resultado = await analizar(config, sistema, catalogo, banco, transcripcion, []);
+          const resultado = await analizar(config, sistema, catalogo, banco, transcripcion, [], perfil);
           return responder(res, 200, { ...resultado, memoria: null, ayuda: ayudaDe(catalogo, preguntasDelTurno(transcripcion, resultado), resultado) });
         }
-        return responder(res, 200, await analizarConMemoria(config, sistema, catalogo, banco, memoria, llamada, transcripcion));
+        return responder(res, 200, await analizarConMemoria(config, sistema, catalogo, banco, memoria, llamada, transcripcion, perfil));
       }
       if (req.method === 'POST' && url.pathname === '/api/brief') {
         const { base, transcripcion } = JSON.parse((await leerCuerpo(req)).toString('utf8')) as { base: BriefBase; transcripcion: Linea[] };
@@ -162,9 +214,10 @@ async function analizarConMemoria(
   memoria: Memoria,
   llamada: { id: string; origen: string; codigo?: string },
   transcripcion: { quien: string; texto: string }[],
+  perfil?: string,
 ) {
   const recuerdo = recuerdos.get(llamada.id) ?? null;
-  const resultado = await analizar(config, sistema, catalogo, banco, transcripcion, recuerdo?.yaSabemos ?? []);
+  const resultado = await analizar(config, sistema, catalogo, banco, transcripcion, recuerdo?.yaSabemos ?? [], perfil);
   const delTurno = preguntasDelTurno(transcripcion, resultado);
   // El conteo técnico solo usa las preguntas del cliente, y la transcripción ya trae todas las de la llamada.
   const ayuda = ayudaDe(catalogo, delTurno, resultado);
@@ -210,6 +263,7 @@ async function analizar(
   banco: Objecion[],
   transcripcion: { quien: string; texto: string }[],
   previo: Recuerdo['yaSabemos'],
+  perfil?: string,
 ) {
   const conversacion = transcripcion
     .slice(-150)
@@ -220,19 +274,31 @@ async function analizar(
         .map((d) => `- ${d.etiqueta}: ${d.valor} (${d.fecha})`)
         .join('\n')}\n\n`
     : '';
-  const mensajes: { role: string; content: unknown }[] = [
-    // El catálogo es igual en cada llamada; se marca para caché y así cada turno responde más rápido.
-    { role: 'system', content: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }] },
-    { role: 'user', content: `${antes}Transcripción de la videollamada hasta ahora:\n\n${conversacion}\n\nDevuelve solo el JSON.` },
-  ];
+  // El perfil de la primera fase orienta las preguntas: no repetir lo ya contestado y hablar al nivel técnico del cliente.
+  const conPerfil = perfil
+    ? `Perfil del cliente capturado al inicio de la llamada (no vuelvas a preguntar lo que ya está aquí; adapta tus preguntas a su nivel técnico):\n${perfil}\n\n`
+    : '';
+  return pedirJson(
+    config,
+    [
+      // El catálogo es igual en cada llamada; se marca para caché y así cada turno responde más rápido.
+      { role: 'system', content: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }] },
+      { role: 'user', content: `${antes}${conPerfil}Transcripción de la videollamada hasta ahora:\n\n${conversacion}\n\nDevuelve solo el JSON.` },
+    ],
+    (crudo) => conObjecion(validar(crudo, catalogo, banco), banco, transcripcion),
+  );
+}
 
+/** Pide a Claude un JSON y lo valida; los dos agentes (perfil y cotización) pasan por aquí. */
+async function pedirJson<T>(config: ConfigApi, mensajes: { role: string; content: unknown }[], validarJson: (crudo: Record<string, unknown>) => T): Promise<T> {
   // Los modelos rápidos a veces dejan el JSON mal formado (una coma o una comilla de más).
   // Si pasa, se le muestra el error y se le pide que lo corrija una vez antes de rendirse.
   for (let intento = 1; ; intento++) {
+    // preguntarAlAgente apaga el razonamiento interno (gastaba los tokens y el JSON llegaba vacío o cortado).
     const respuesta = await preguntarAlAgente(config, { model: config.modeloAgente, temperature: 0.2, messages: mensajes });
     const texto = String(respuesta.choices?.[0]?.message?.content ?? '');
     try {
-      return conObjecion(validar(leerJson(texto), catalogo, banco), banco, transcripcion);
+      return validarJson(leerJson(texto));
     } catch (e) {
       const motivo = e instanceof Error ? e.message : String(e);
       // Deja rastro de por qué: corte por tokens (fin "length"), texto fuera del objeto o JSON mal formado.
@@ -266,6 +332,84 @@ function leerJson(texto: string): Record<string, unknown> {
     .replace(/[“”]/g, '"')
     .replace(/,\s*([}\]])/g, '$1');
   return JSON.parse(json);
+}
+
+/** Primera fase de la llamada: Claude llena las 10 preguntas de perfil con lo que el cliente ya dijo. */
+async function analizarPerfil(config: ConfigApi, sistema: string, catalogo: Catalogo, transcripcion: { quien: string; texto: string }[]): Promise<Perfil> {
+  const conversacion = transcripcion
+    .slice(-150)
+    .map((t) => `${t.quien}: ${t.texto}`)
+    .join('\n');
+  return pedirJson(
+    config,
+    [
+      { role: 'system', content: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }] },
+      { role: 'user', content: `Transcripción de la videollamada hasta ahora:\n\n${conversacion || '(todavía nadie habla)'}\n\nDevuelve solo el JSON.` },
+    ],
+    (crudo) => validarPerfil(crudo, catalogo),
+  );
+}
+
+function promptDelPerfil(catalogo: Catalogo) {
+  const preguntas = PREGUNTAS_PERFIL.map((p) => `- ${p.id} (${BLOQUES[p.bloque]}): ${p.texto} — revela: ${p.revela}`).join('\n');
+  const familias = catalogo.familias.map((f) => `- ${f.id} = ${f.nombre}. Resuelve: ${f.problemas_que_resuelve}`).join('\n');
+  const reglas = catalogo.reglas_escalamiento.map((r) => `- ${r.id}: ${r.cuando_entra_un_arquitecto}`).join('\n');
+
+  return `Eres el copiloto de un vendedor de soluciones de TI. Esta es la PRIMERA fase de la videollamada: entender al cliente
+antes de cotizar. Lees la transcripción y llenas su perfil con lo que el cliente ya dijo. No cotizas ni propones productos todavía.
+
+Preguntas del perfil:
+${preguntas}
+
+Cómo medir el nivel técnico (B1 y B2):
+- "básico": la tecnología la ve el contador o nadie; describe sus sistemas de forma vaga.
+- "intermedio": hay un encargado; nombra su sistema principal (ej. "el ERP").
+- "avanzado": tienen área de TI; habla con nombres técnicos (ej. "JD Edwards en Oracle 19c").
+
+Familias del catálogo:
+${familias}
+
+Reglas de escalamiento (cuándo entra un arquitecto):
+${reglas}
+
+Devuelve solo un objeto JSON, sin texto antes ni después:
+{
+  "respuestas": { "A1": "lo que dijo el cliente, resumido en máximo 12 palabras", "A2": null },
+  "nivel": "básico | intermedio | avanzado | null",
+  "reglas": ["ESC-04"],
+  "familias": ["M365", "BK"],
+  "resumen": "diagnóstico en máximo 2 frases para el vendedor, o null si todavía no hay suficiente",
+  "siguiente": "id de la siguiente pregunta que conviene hacer, o null si ya están todas"
+}
+
+Reglas:
+- Pon una respuesta solo si el cliente la dijo; si no, null. Nunca la supongas.
+- "reglas": solo las ESC que lo dicho ya cumple (ej. datos de salud = ESC-04, más de 300 usuarios = ESC-02).
+- "familias": ids de las familias que probablemente apliquen por el dolor y la situación actual; vacío si no hay señal.
+- "siguiente": la pregunta pendiente más útil; primero las del bloque A, luego B, C y D, pero si el cliente ya tocó un tema, sigue con ese.
+- Todo en español de México.`;
+}
+
+function validarPerfil(crudo: Record<string, unknown>, catalogo: Catalogo): Perfil {
+  const texto = (x: unknown, max: number) => (typeof x === 'string' && x.trim() && x.trim() !== 'null' ? x.trim().slice(0, max) : null);
+  const ids = new Set(PREGUNTAS_PERFIL.map((p) => p.id));
+  const reglas = new Set(catalogo.reglas_escalamiento.map((r) => r.id));
+  const familias = new Set(catalogo.familias.map((f) => f.id));
+  const crudas = (crudo.respuestas ?? {}) as Record<string, unknown>;
+  const lista = (x: unknown) => (Array.isArray(x) ? (x as unknown[]).map(String) : []);
+  const nivel = String(crudo.nivel ?? '');
+  const siguiente = String(crudo.siguiente ?? '');
+
+  const respuestas = Object.fromEntries(PREGUNTAS_PERFIL.map((p) => [p.id, texto(crudas[p.id], 120)]));
+  return {
+    respuestas,
+    nivel: (['básico', 'intermedio', 'avanzado'] as NivelTecnico[]).find((n) => n === nivel) ?? null,
+    reglas: lista(crudo.reglas).filter((id, i, t) => reglas.has(id) && t.indexOf(id) === i),
+    familias: lista(crudo.familias).filter((id, i, t) => familias.has(id) && t.indexOf(id) === i),
+    resumen: texto(crudo.resumen, 260),
+    // Si el modelo propone una que ya está contestada o que no existe, se toma la primera pendiente.
+    siguiente: ids.has(siguiente) && !respuestas[siguiente] ? siguiente : (PREGUNTAS_PERFIL.find((p) => !respuestas[p.id])?.id ?? null),
+  };
 }
 
 /** Lo que diga el modelo pasa por aquí: solo sobreviven productos y reglas que existen en el catálogo. */

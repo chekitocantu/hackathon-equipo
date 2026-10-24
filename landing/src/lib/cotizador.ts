@@ -13,6 +13,36 @@ export interface ProductoEnEtapa {
   nota?: string;
 }
 
+// Qué tan avanzado está un producto en la llamada. El mapa solo sube en esta escala, nunca baja.
+const AVANCE: Record<EstadoProducto, number> = { sugerido: 0, pendiente: 1, incluido: 2, arquitecto: 3 };
+const MAXIMO_SUGERIDOS = 2;
+
+/**
+ * Junta el mapa que ya se mostró con el que acaba de llegar del agente, para que no cambie a cada rato:
+ * - Lo que ya apareció no desaparece y se queda en su lugar; lo nuevo se agrega al final.
+ * - Un producto solo avanza (sugerido → pendiente → incluido → arquitecto); si el agente lo regresa, se ignora.
+ * - Si el agente no repite la cantidad o la nota, se conserva la que ya había; si da otra, se usa la nueva
+ *   (el cliente pudo corregir: "en realidad son 30").
+ */
+export function fusionarProductos(anteriores: ProductoEnEtapa[], nuevos: ProductoEnEtapa[]): ProductoEnEtapa[] {
+  const porSku = new Map(nuevos.map((p) => [p.sku, p]));
+  const fusion = anteriores.map((antes) => {
+    const ahora = porSku.get(antes.sku);
+    if (!ahora) return antes;
+    return {
+      sku: antes.sku,
+      estado: AVANCE[ahora.estado] >= AVANCE[antes.estado] ? ahora.estado : antes.estado,
+      cantidad: ahora.cantidad ?? antes.cantidad,
+      nota: ahora.nota ?? antes.nota,
+    };
+  });
+  const yaEstaban = new Set(anteriores.map((p) => p.sku));
+  const agregados = nuevos.filter((p) => !yaEstaban.has(p.sku));
+  // Las sugerencias son lo que más varía entre respuestas: se quedan las primeras que salieron.
+  let sugeridos = fusion.filter((p) => p.estado === 'sugerido').length;
+  return [...fusion, ...agregados.filter((p) => p.estado !== 'sugerido' || ++sugeridos <= MAXIMO_SUGERIDOS)];
+}
+
 export type MotivoSinPrecio = 'falta-dato' | 'arquitecto' | 'consumo';
 
 export interface LineaCotizada {

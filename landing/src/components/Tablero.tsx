@@ -61,6 +61,10 @@ interface TableroProps {
   ayuda?: Ayuda | null;
   /** Quién es el cliente, para encabezar la propuesta y el brief. */
   cliente?: ClienteDocumento;
+  /** La primera cotización todavía no llega: en lugar de un tablero vacío se ve que se está armando. */
+  cargando?: boolean;
+  /** Ya hay cotización y el agente la está recalculando con lo último que dijo el cliente. */
+  actualizando?: boolean;
 }
 
 const CATALOGO_IT = {
@@ -86,6 +90,8 @@ export default function Tablero({
   preguntasSugeridas = [],
   ayuda: ayudaServidor,
   cliente,
+  cargando = false,
+  actualizando = false,
 }: TableroProps) {
   const [plazo, setPlazo] = useState(12);
   const [documento, setDocumento] = useState<TipoDocumento | null>(null);
@@ -150,8 +156,19 @@ export default function Tablero({
           </p>
         </div>
 
-        {/* Mapa de soluciones: toma todo el alto que sobra */}
-        <section style={{ ...tarjeta, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', paddingBottom: '14px' }}>
+        {/* Mapa de soluciones: toma todo el alto que sobra, pero nunca menos de lo que necesita el dibujo
+            (si se aplasta, el SVG se salía y se encimaba sobre las tarjetas de abajo) */}
+        <section
+          style={{
+            ...tarjeta,
+            flex: 1,
+            minHeight: apilado ? 0 : 'clamp(190px, 28vh, 300px)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            paddingBottom: '14px',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', flexWrap: 'wrap', marginBottom: '8px' }}>
             <h2 style={tituloTarjeta}>Mapa de soluciones</h2>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.8rem', color: SECUNDARIO }}>
@@ -161,8 +178,12 @@ export default function Tablero({
               <Leyenda color="#c7c7cc" texto="Sugerido" />
             </div>
           </div>
-          <div style={{ position: 'relative', ...(apilado ? { aspectRatio: '1080 / 250' } : { flex: 1, minHeight: '150px' }) }}>
-            <MapaSoluciones productos={productos} />
+          <div style={{ position: 'relative', ...(apilado ? { aspectRatio: '1080 / 250' } : { flex: 1, minHeight: '120px' }) }}>
+            {cargando ? (
+              <Cargando texto="Armando la cotización con el perfil del cliente…" detalle="El agente cruza lo que dijo el cliente con el catálogo." />
+            ) : (
+              <MapaSoluciones productos={productos} />
+            )}
           </div>
           {familiasSinSenal.length > 0 && (
             <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: TERCIARIO }}>Sin señal: {familiasSinSenal.join(' · ')}</p>
@@ -190,6 +211,13 @@ export default function Tablero({
                   )}
                   <span style={{ fontSize: '0.78rem', color: TERCIARIO, marginLeft: 'auto' }}>{pregunta.fuente}</span>
                 </div>
+              </>
+            ) : cargando ? (
+              <>
+                <p style={{ margin: 0, fontSize: '0.88rem', fontWeight: 600, color: AZUL_TEXTO }}>Preparando</p>
+                <p style={{ margin: '6px 0 0', fontSize: '1.05rem', color: SECUNDARIO, lineHeight: 1.4 }}>
+                  La primera pregunta de cotización sale en unos segundos.
+                </p>
               </>
             ) : listo ? (
               <Resultado carril={carril} conArquitecto={conArquitecto} />
@@ -243,6 +271,12 @@ export default function Tablero({
       <aside style={{ ...tarjeta, padding: '22px 24px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
           <h2 style={tituloTarjeta}>Cotización</h2>
+          {actualizando && !cargando && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: SECUNDARIO, marginRight: 'auto' }}>
+              <Girando tamano={12} />
+              Actualizando
+            </span>
+          )}
           {productos.length > 0 && (
             <span
               title={CARRILES[carril].explicacion}
@@ -276,7 +310,15 @@ export default function Tablero({
         )}
 
         <div style={{ margin: '14px 0 4px' }}>
-          {cotizacion.hayPrecio ? (
+          {cargando ? (
+            <>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.025em' }}>
+                <Girando tamano={22} />
+                Cargando cotización
+              </span>
+              <div style={{ color: SECUNDARIO, fontSize: '0.88rem', marginTop: '4px' }}>Precios del catálogo en unos segundos.</div>
+            </>
+          ) : cotizacion.hayPrecio ? (
             <>
               <span style={{ fontSize: 'clamp(2.2rem, 4.6vh, 3rem)', fontWeight: 800, letterSpacing: '-0.035em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                 {moneda(cotizacion.mensual)}
@@ -637,5 +679,47 @@ function Marca({ lista, siguiente }: { lista: boolean; siguiente: boolean }) {
         </svg>
       )}
     </span>
+  );
+}
+
+/** Aviso centrado mientras se arma la primera cotización, para que el vendedor no piense que algo falló. */
+function Cargando({ texto, detalle }: { texto: string; detalle: string }) {
+  return (
+    <div
+      role="status"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '10px',
+        textAlign: 'center',
+        padding: '0 16px',
+      }}
+    >
+      <Girando tamano={28} />
+      <span style={{ fontSize: '1.05rem', fontWeight: 600, color: TEXTO }}>{texto}</span>
+      <span style={{ fontSize: '0.88rem', color: TERCIARIO }}>{detalle}</span>
+    </div>
+  );
+}
+
+function Girando({ tamano }: { tamano: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        width: `${tamano}px`,
+        height: `${tamano}px`,
+        flexShrink: 0,
+        borderRadius: '50%',
+        boxSizing: 'border-box',
+        border: `${Math.max(2, Math.round(tamano / 9))}px solid ${SEPARADOR}`,
+        borderTopColor: AZUL,
+        animation: 'girar 0.8s linear infinite',
+      }}
+    />
   );
 }

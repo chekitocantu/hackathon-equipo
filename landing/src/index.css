@@ -24,6 +24,10 @@ html, body {
   from { opacity: 0; }
 }
 
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
 #root {
   width: 100%;
   min-height: 100%;

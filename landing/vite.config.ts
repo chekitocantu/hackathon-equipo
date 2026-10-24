@@ -9,7 +9,7 @@ function apiLocal(env: Record<string, string>): Plugin {
   const config = (raiz: string) => ({
     apiKey: env.OPENROUTER_API_KEY,
     modeloTranscripcion: env.OPENROUTER_MODELO_TRANSCRIPCION || 'openai/whisper-large-v3-turbo',
-    modeloAgente: env.OPENROUTER_MODELO_AGENTE || 'anthropic/claude-haiku-5.5',
+    modeloAgente: env.OPENROUTER_MODELO_AGENTE || 'anthropic/claude-sonnet-5.5',
     vexa: { apiKey: env.VEXA_API_KEY, url: env.VEXA_API_URL || 'https://api.cloud.vexa.ai' },
     insforge: configInsforge(env, raiz),
     raiz,
