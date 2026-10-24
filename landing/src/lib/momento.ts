@@ -170,6 +170,7 @@ export function useColaSugerencias(
             texto: p.texto,
             motivo: p.motivo,
             fuente: p.fuente,
+            cuidado: p.cuidado ?? null,
             oportunidad,
             hora: reloj(ahora - e.inicioLlamada),
             hecha: false,

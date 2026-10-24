@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import {
   AZUL,
   AZUL_TEXTO,
+  NARANJA_TEXTO,
   SECUNDARIO,
   SEPARADOR,
   TERCIARIO,
@@ -18,6 +19,8 @@ export interface ItemSugerencia {
   texto: string;       // the question
   motivo: string;
   fuente: string;
+  /** Del banco de objeciones: lo que el vendedor no debe decir en ese momento. */
+  cuidado?: string | null;
   oportunidad: string; // why it appeared, e.g. 'Hubo una pausa en la plática'
   hora: string;        // e.g. '02:15' (call clock)
   hecha: boolean;      // the seller already asked it
@@ -136,6 +139,9 @@ export default function PanelSugerencias(props: PanelSugerenciasProps) {
                 <p style={{ margin: 0, fontSize: '0.9rem', color: SECUNDARIO }}>
                   <span style={{ fontWeight: 600 }}>Por qué:</span> {fijada.motivo}
                 </p>
+                {fijada.cuidado && (
+                  <p style={{ margin: '4px 0 0', fontSize: '0.86rem', color: NARANJA_TEXTO }}>Evita: {fijada.cuidado}.</p>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
                   <span style={{ fontSize: '0.78rem', color: TERCIARIO }}>{fijada.fuente}</span>
                   {fijada.hecha ? (

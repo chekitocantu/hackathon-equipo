@@ -9,6 +9,8 @@ export interface Pregunta {
   motivo: string;
   /** De dónde sale la pregunta, para que se vea que no es invento. */
   fuente: string;
+  /** Si viene del banco de objeciones: lo que el vendedor no debe decir en ese momento. */
+  cuidado?: string | null;
 }
 
 export interface Etapa {

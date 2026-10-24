@@ -179,6 +179,9 @@ export default function Tablero({
                   {pregunta.texto}
                 </p>
                 {pregunta.motivo && <p style={{ margin: 0, fontSize: '0.9rem', color: SECUNDARIO }}>{pregunta.motivo.replace(/\.?$/, '.')}</p>}
+                {pregunta.cuidado && (
+                  <p style={{ margin: '4px 0 0', fontSize: '0.86rem', color: NARANJA_TEXTO }}>Evita: {pregunta.cuidado}.</p>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
                   {alHacerPregunta && (
                     <button style={botonPrimario} onClick={alHacerPregunta}>
