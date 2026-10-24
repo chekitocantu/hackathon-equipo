@@ -17,6 +17,8 @@ Por definir.
 ## Estado actual
 Ya tenemos el reto (RETO.md), la idea base (el Traductor), una landing, un dashboard inicial y un catálogo simulado
 (`catalogo-simulado/`). Falta acordar el MVP (#1) y el stack (#2). Próximo checkpoint: 17:00, prototipo funcional.
+El tablero en vivo (/llamada) ya guarda cada llamada en InsForge, muestra lo que el cliente dijo antes y clientes
+parecidos, y dice si hace falta IT (8 de 10 preguntas técnicas, o productos y reglas ESC que llevan arquitecto): #9.
 
 **Quién hace qué** (detalle en [EQUIPO.md](EQUIPO.md)):
 
