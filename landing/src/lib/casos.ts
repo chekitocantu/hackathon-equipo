@@ -122,7 +122,7 @@ const aceros: Guion = {
       cliente: 'Son dos servidores de 2U y un switch; casi no consumen. Tenemos 3 sucursales que entran al ERP.',
       productos: [
         { sku: 'SIM-DC-01', estado: 'incluido', nota: '2 servidores + switch' },
-        { sku: 'SIM-DC-08', estado: 'incluido', nota: '3 sucursales' },
+        { sku: 'SIM-DC-08', estado: 'incluido', cantidad: 3, nota: '3 sucursales' },
         { sku: 'SIM-BK-01', estado: 'pendiente' },
         { sku: 'SIM-BK-03', estado: 'incluido', cantidad: 2 },
         { sku: 'SIM-DC-07', estado: 'sugerido' },
@@ -139,7 +139,7 @@ const aceros: Guion = {
       cliente: 'Máximo una hora; cada hora parada es producción perdida. Entre los dos servidores son como 3 TB.',
       productos: [
         { sku: 'SIM-DC-01', estado: 'incluido', nota: '2 servidores + switch' },
-        { sku: 'SIM-DC-08', estado: 'incluido', nota: '3 sucursales' },
+        { sku: 'SIM-DC-08', estado: 'incluido', cantidad: 3, nota: '3 sucursales' },
         { sku: 'SIM-BK-01', estado: 'incluido', cantidad: 3 },
         { sku: 'SIM-BK-03', estado: 'incluido', cantidad: 2 },
         { sku: 'SIM-DC-07', estado: 'arquitecto', nota: 'Volver en 1 h' },

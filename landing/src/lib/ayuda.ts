@@ -1,7 +1,8 @@
 // Algoritmo de ayuda de IT: decide si el vendedor necesita a un ingeniero o arquitecto, y para qué exactamente.
 // Es código determinista (no IA) para que cada decisión diga de dónde salió:
-//   1. Junta las preguntas de la llamada (las que hace el cliente y las que el agente le sugiere al vendedor)
-//      y marca cuáles son técnicas según un glosario. Si 8 de cada 10 o más son técnicas, hace falta IT.
+//   1. Junta las preguntas que hace el cliente y marca cuáles son técnicas según un glosario. Si 8 de cada 10
+//      o más son técnicas, hace falta IT. Las que el agente le sugiere al vendedor se guardan pero no cuentan:
+//      salen de las preguntas clave del catálogo, casi todas técnicas, e inflarían el conteo solas.
 //   2. Revisa cada producto detectado y cada regla ESC del catálogo: lo "a la medida", lo que cumple su condición
 //      de "cuándo entra arquitecto" y cada regla activada SÍ es de IT; lo estándar o configurable NO, lo cotiza ventas.
 //   3. Con eso da el tipo de caso: estándar (IT no entra), mixto (IT entra solo en una parte), a la medida (todo es de IT)
@@ -79,7 +80,9 @@ const COMERCIALES = [
   'precio', 'costo', 'cuesta', 'cuanto sale', 'descuento', 'plazo', 'contrato', 'factura', 'facturar', 'pago', 'pagar',
   'mensualidad', 'propuesta', 'presupuesto', 'iva', 'cotizacion', 'cotizar', 'promocion', 'meses sin intereses',
 ];
-const PALABRAS_DE_PREGUNTA = /^(que|como|cuanto|cuantos|cuantas|cual|cuales|cuando|donde|se puede|pueden|puedo|es posible|tienen|incluye|sirve)\b/;
+// Con acento ("qué", "cómo"…) es pregunta aunque la transcripción no traiga "?"; sin acento es otra cosa
+// ("como tenemos 3 sucursales…"), así que se compara sobre el texto original y no sobre el normalizado.
+const PALABRAS_DE_PREGUNTA = /^(qué|cómo|cuánto|cuántos|cuántas|cuál|cuáles|cuándo|dónde|es posible)(?![\p{L}])/iu;
 
 const buscar = (texto: string, lista: string[]) => {
   const t = ` ${normalizar(texto).replace(/[^a-z0-9-]+/g, ' ')} `;
@@ -99,7 +102,7 @@ export function preguntasDelCliente(transcripcion: { quien: string; texto: strin
     .filter((t) => /cliente/i.test(t.quien))
     .flatMap((t) => t.texto.split(/(?<=[.?!])\s+/))
     .map((frase) => frase.trim())
-    .filter((frase) => frase.length > 8 && (frase.includes('?') || PALABRAS_DE_PREGUNTA.test(normalizar(frase).replace(/^[¿¡\s]+/, ''))))
+    .filter((frase) => frase.length > 8 && (frase.includes('?') || PALABRAS_DE_PREGUNTA.test(frase.normalize('NFC').replace(/^[¿¡\s]+/, ''))))
     .map((texto) => ({ origen: 'cliente' as const, texto, ...clasificar(texto) }));
 }
 
@@ -134,8 +137,8 @@ export function evaluar(
     entra.push({ tema: `Regla ${r.id}`, motivo: r.texto, fuente: `Reglas de escalamiento · ${r.id}` });
   }
 
-  // Cada pregunta cuenta una vez, aunque el agente la sugiera en varios turnos.
-  const unicas = [...new Map(preguntas.map((p) => [claveDePregunta(p.texto), p])).values()];
+  // Cada pregunta del cliente cuenta una vez; las sugeridas por el agente no entran al conteo (ver arriba).
+  const unicas = [...new Map(preguntas.filter((p) => p.origen === 'cliente').map((p) => [claveDePregunta(p.texto), p])).values()];
   const tecnicas = unicas.filter((p) => p.tecnica);
   const total = unicas.length;
   const muyTecnica = total >= MINIMO_PREGUNTAS && tecnicas.length / total >= UMBRAL_TECNICO;

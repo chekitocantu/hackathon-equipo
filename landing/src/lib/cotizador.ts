@@ -36,7 +36,14 @@ export interface Cotizacion {
   descuentoTotalPct: number;
   rebasaTopeVendedor: boolean;
   hayPrecio: boolean;
+  /** Líneas que no entran al total (falta un dato, consumo o arquitecto): si hay alguna, el total es parcial. */
+  sinPrecio: number;
+  /** Reglas de escalamiento que se cumplen por las cuentas, sin depender de lo que diga la IA (ej. ESC-09 por monto). */
+  reglas: string[];
 }
+
+/** ESC-09: presupuesto estimado mayor a este monto al mes (catálogo → reglas de escalamiento). */
+const TOPE_MENSUAL_ESTANDAR = 250_000;
 
 const moneda = (valor: number) => `$${Math.round(valor).toLocaleString('en-US')}`;
 
@@ -47,20 +54,37 @@ function cotizarLinea({ sku, estado, cantidad }: ProductoEnEtapa): LineaCotizada
 
   if (estado === 'arquitecto' || p.tipo === 'a la medida') return { ...base, sinPrecio: 'arquitecto', detalle: 'Lo diseña un arquitecto' };
   if (p.unidad_cobro === 'según consumo') return { ...base, sinPrecio: 'consumo', detalle: 'Se cobra según consumo' };
+  // "% del consumo" tiene un mínimo mensual, pero el cobro real depende de lo que use: no se suma como cuota fija.
+  if (p.unidad_cobro.startsWith('%')) {
+    return { ...base, sinPrecio: 'consumo', detalle: `${p.unidad_cobro.split(' (')[0]}, mínimo ${moneda(p.precio_mensual_mxn ?? 0)} al mes` };
+  }
   if (estado === 'pendiente' || (unidad && cantidad === undefined)) {
     return { ...base, sinPrecio: 'falta-dato', detalle: unidad ? `Falta saber cuántos ${unidad}` : 'Por dimensionar' };
   }
 
-  const n = cantidad ?? 1;
+  // Sin unidad de cobro y con tope mayor a 1 (ej. agente de conocimiento: hasta 100 usuarios), la cantidad es
+  // capacidad y no multiplica el precio. Sin unidad y sin ese tope, la cantidad cuenta piezas (racks, enlaces).
+  const esCapacidad = !unidad && (p.cantidad_maxima ?? 0) > 1;
+  const n = esCapacidad ? 1 : (cantidad ?? 1);
+  const pedido = cantidad ?? n;
+  const cuantos = unidad ? ` ${unidad}` : esCapacidad ? ' usuarios' : '';
+  // Los límites del catálogo: arriba del máximo lo revisa un arquitecto; abajo del mínimo no se cotiza así.
+  if (p.cantidad_maxima !== null && pedido > p.cantidad_maxima) {
+    const tope = cuantos ? `Más de ${p.cantidad_maxima}${cuantos}` : `El catálogo cubre hasta ${p.cantidad_maxima}`;
+    return { ...base, sinPrecio: 'arquitecto', detalle: `${tope}: lo revisa un arquitecto` };
+  }
+  if (p.cantidad_minima !== null && pedido < p.cantidad_minima) {
+    return { ...base, sinPrecio: 'falta-dato', detalle: `El mínimo es ${p.cantidad_minima}${cuantos}` };
+  }
+
   const esCargoUnico = p.unidad_cobro.startsWith('cargo único');
   const precio = esCargoUnico ? (p.cargo_unico_mxn ?? 0) : (p.precio_mensual_mxn ?? 0);
   const mensual = esCargoUnico ? 0 : precio * n;
   // Los cargos únicos por unidad (buzón, servidor) se multiplican; el de instalación de un servicio mensual, no.
   const unico = esCargoUnico ? precio * n : (p.cargo_unico_mxn ?? 0);
-  const minimo = p.unidad_cobro.startsWith('%') ? ' (mínimo mensual)' : '';
-  const detalle = unidad ? `${n} ${unidad} × ${moneda(precio)}` : n > 1 ? `${n} × ${moneda(precio)}` : `Precio de lista${minimo}`;
+  const detalle = unidad ? `${n} ${unidad} × ${moneda(precio)}` : n > 1 ? `${n} × ${moneda(precio)}` : 'Precio de lista';
 
-  return { ...base, cantidad: n, mensual, unico, detalle: esCargoUnico ? `${detalle} · cargo único` : detalle };
+  return { ...base, cantidad: esCapacidad ? base.cantidad : n, mensual, unico, detalle: esCargoUnico ? `${detalle} · cargo único` : detalle };
 }
 
 export function cotizar(productos: ProductoEnEtapa[], plazoMeses: number): Cotizacion {
@@ -95,6 +119,8 @@ export function cotizar(productos: ProductoEnEtapa[], plazoMeses: number): Cotiz
     descuentoTotalPct,
     rebasaTopeVendedor: descuentoTotalPct > CONDICIONES.topeVendedorPct,
     hayPrecio: conPrecio.length > 0,
+    sinPrecio: lineas.length - conPrecio.length,
+    reglas: mensual > TOPE_MENSUAL_ESTANDAR ? ['ESC-09'] : [],
   };
 }
 
@@ -102,7 +128,7 @@ export type Carril = 'estándar' | 'mixto' | 'a la medida';
 
 /** Estándar si nada pasa por arquitecto; mixto si una parte sí se cotiza hoy; a la medida si nada. */
 export function carrilDe(cotizacion: Cotizacion, reglas: string[]): Carril {
-  const conArquitecto = reglas.length > 0 || cotizacion.lineas.some((l) => l.sinPrecio === 'arquitecto');
+  const conArquitecto = reglas.length > 0 || cotizacion.reglas.length > 0 || cotizacion.lineas.some((l) => l.sinPrecio === 'arquitecto');
   if (!conArquitecto) return 'estándar';
   return cotizacion.hayPrecio ? 'mixto' : 'a la medida';
 }

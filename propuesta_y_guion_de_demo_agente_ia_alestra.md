@@ -1,105 +1,122 @@
-# Propuesta de Hackathon: Alestra Live Architect & CPQ Copilot
+# Propuesta de Hackathon: el Traductor, copiloto de ventas en vivo para Alestra
 
-## 1. El Problema en Alestra (El Cuello de Botella)
-En las ventas corporativas (B2B) de telecomunicaciones y TI de **Alestra**, el ciclo para entregar una cotización formal toma entre **3 y 4 sesiones (de 2 a 3 semanas)**. Esto ocurre por una desconexión entre tres partes que hablan "idiomas" distintos:
+> Todo lo que dice este guion sale del catálogo simulado (`catalogo-simulado/`) y del caso que corre la app
+> (`landing/src/lib/casos.ts`, caso «Aceros del Valle»). Si algo cambia en el catálogo, cambia aquí.
+> Precios en MXN, sin IVA salvo donde se indica.
 
-1. **El Cliente:** Habla en *dolores de negocio* ("se me traban las cajas para facturar", "tengo una bodega lejana").
-2. **El Ejecutivo de Ventas:** Habla en *términos comerciales*, toma notas en papel o CRM, pero **olvida preguntar parámetros técnicos críticos** porque no es ingeniero.
-3. **El Ingeniero de Preventa (Solutions Architect):** Habla en *parámetros duros de infraestructura* (Mbps simétricos, SLA, cobertura de fibra, vCPUs, RTO/RPO). Cuando el vendedor le lleva sus notas incompletas después de la Llamada 1, el ingeniero rebota la solicitud y obliga a agendar una **Sesión 2** para levantar datos técnicos y una **Sesión 3** para presentar el diagrama y el precio.
+## 1. El problema en Alestra (el cuello de botella)
+Hoy el cliente necesita **3 sesiones en promedio** para dejar completo su requerimiento, y la propuesta
+económica tarda **hasta 3 semanas**, aunque el **60% de lo que se cotiza es estándar** con precio fijo
+(ver `RETO.md`). Pasa porque tres partes hablan "idiomas" distintos:
 
----
+1. **El cliente:** habla en *dolores de negocio* ("se nos fue la luz y paramos la operación").
+2. **El ejecutivo de ventas:** habla en *términos comerciales* y no conoce todo el portafolio: no sabe qué
+   preguntar, y el levantamiento queda incompleto.
+3. **El arquitecto de soluciones:** habla en *parámetros de infraestructura* (U de rack, TB, RPO/RTO). Como las notas
+   llegan incompletas, entra **casi siempre** y el cliente vuelve a explicar todo.
 
-## 2. Nuestra Propuesta: ¿Qué hace el Agente IA?
-Desarrollamos un **Copiloto de Preventa y Cotización en Tiempo Real (Live CPQ)** que se sienta "virtualmente" al lado del vendedor durante su primera videollamada con el cliente.
-
-El Agente escucha la llamada en vivo y actúa como un **Arquitecto de Soluciones Senior en el monitor del vendedor**, ejecutando 4 funciones automáticas mientras ocurre la conversación:
-
-### A. Traductor Bidireccional en Vivo
-* **De Queja a Solución Técnica:** Escucha el problema coloquial del cliente y selecciona automáticamente qué servicios del catálogo de Alestra lo resuelven (`Managed SD-WAN`, `Internet Dedicado`, `Cloud Express`, `Clean Pipes`, `Alestra Móvil`).
-* **De Requisito Técnico a Pregunta Humana:** Identifica qué datos técnicos exige el cotizador de Alestra y le muestra al vendedor en pantalla una **pregunta sencilla en lenguaje humano** para que se la haga al cliente en ese instante.
-
-### B. Sistema "Anti-Olvido" (Dynamic Slot-Filling)
-* Abre un checklist dinámico en pantalla por cada producto detectado.
-* Si al vendedor le falta preguntar un dato obligatorio para cotizar (ej. cantidad de sucursales, ubicación o tipo de nube), el agente lanza una **Alerta en Vivo** antes de que termine la llamada.
-
-### C. Dimensionamiento y Reglas de Factibilidad Automáticas
-* El cliente no sabe cuántos `Mbps` o `vCPUs` necesita. Cuando el cliente dice *"tengo 15 computadoras y cámaras"*, el Agente calcula automáticamente el ancho de banda técnico (`100 Mbps simétricos`).
-* Si detecta una ubicación sin cobertura de fibra óptica (ej. una bodega industrial en las afueras), **reemplaza o complementa automáticamente** ese nodo con **`Alestra Móvil (SIM Multioperador 5G)`** sin frenar la cotización.
-
-### D. Generador de Arquitectura y Cotización en 1 Clic (Live BOM)
-* Dibuja en tiempo real el diagrama técnico de red en la pantalla para que el vendedor pueda compartirlo antes de colgar.
-* Calcula el precio mensual estimado (OPEX) en vivo y genera el PDF formal con la tabla técnica (Bill of Materials) en el minuto 15 de la **primera llamada**.
+La información ya existe (catálogo, precios, reglas de cuándo entra un arquitecto). Lo que falta es que llegue
+al vendedor **en el momento** en que el cliente habla.
 
 ---
 
-## 3. Guion del Demo en Vivo (Del Turno 1 al Cierre)
+## 2. Nuestra propuesta: ¿qué hace el agente?
+Un **copiloto en vivo** que escucha la primera videollamada y le muestra al vendedor, en su pantalla, lo que
+el catálogo dice de lo que el cliente acaba de contar.
+
+### A. Traductor en vivo, anclado al catálogo
+* **De queja a producto:** escucha el problema y marca qué productos del catálogo lo resuelven. Solo puede usar
+  SKU que existen; si el modelo propone otro, el sistema lo descarta.
+* **De requisito técnico a pregunta humana:** muestra la siguiente pregunta en lenguaje sencillo, tomada de las
+  "preguntas clave" del catálogo, con su fuente a la vista (ej. *Catálogo · Colocation 1/4 de rack*).
+
+### B. Lo que falta saber
+* Una lista de los datos que faltan para cotizar el caso. Se va llenando sola con lo que dice el cliente.
+* Las sugerencias esperan una pausa o a que el cliente toque el tema, para no interrumpirlo.
+
+### C. Estándar contra a la medida, sin adivinar
+* **Las cuentas no las hace la IA.** Precio, paquete, plazo e IVA salen del catálogo con código determinista.
+  Los límites de cantidad, el monto de ESC-09 y los productos a la medida también se revisan en código.
+* **Reglas de escalamiento (ESC):** cuando el cliente dice algo que cumple una regla, el tablero dice cuál
+  y por qué entra el arquitecto, y solo en esa parte. Lo demás lo cotiza el vendedor ese mismo día.
+
+### D. Cotización en vivo
+* El total mensual se arma mientras se habla. Si falta un dato, el tablero dice **"Total parcial"** y qué falta;
+  nunca muestra un número como si estuviera completo.
+
+---
+
+## 3. Guion del demo en vivo (caso Aceros del Valle, manufactura, Apodaca)
 
 **Configuración en el escenario:**
-* **Persona A:** Actúa como el Cliente (Dueño de una cadena de ferreterías).
-* **Persona B:** Actúa como el Vendedor de Alestra.
-* **Pantalla Proyectada:** Muestra la interfaz de nuestro Agente IA reaccionando en vivo a la voz.
+* **Persona A:** el cliente (gerente de operaciones de Aceros del Valle).
+* **Persona B:** el vendedor de Alestra.
+* **Pantalla proyectada:** `/llamada` → "Ver demo" con el caso *Aceros del Valle*, o la misma conversación
+  dicha en voz alta. Si la red falla, el modo demo sigue con el guion del caso (respaldo).
 
 ---
 
-### TURNO 1: Detección del Dolor y Mapeo Inicial
+### TURNO 1: detección del dolor
 
-#### 1. Lo que dice el Cliente (en la llamada):
-> *"Hola, mira, tenemos 10 ferreterías acá en Monterrey y Saltillo. Nuestro problema es que usamos un sistema en la nube para cobrar, pero a cada rato el internet se pone lentísimo y las cajas se quedan trabadas sin poder facturar."*
+#### 1. Lo que dice el cliente:
+> *"Nuestro ERP corre en dos servidores en un cuarto de la planta. Se nos fue la luz dos veces este año y paramos la operación."*
 
-#### 2. Lo que hace el Agente IA en el Monitor del Vendedor (en menos de 2 segundos):
-* **Extracción de Entidades:** Detecta Giro = `Comercio / Retail`, Sitios = `10 sucursales`, Ciudades = `Monterrey, Saltillo`.
-* **Traducción Técnica:** Diagnostica saturación de ancho de banda sin priorización de tráfico (QoS).
-* **Activación de Catálogo Alestra:** Agrega al cotizador `Internet Dedicado` + `Managed SD-WAN` (para darle prioridad al tráfico de las cajas registradoras).
-* **Barra de Precisión de Cotización:** Sube a **30%**.
-* **Alerta Anti-Olvido (Susurro al Vendedor):**
-  > **PREGÚNTALE ESTO AHORA:** *"¿Cuántas computadoras o cajas tienen por tienda y en qué nube (AWS, Azure, etc.) está guardado su sistema de cobro?"*
+#### 2. Lo que hace el agente en el monitor del vendedor:
+* **Producto:** marca *Colocation 1/4 de rack* (SIM-DC-01) como pendiente de dimensionar y sugiere
+  *Backup inmutable en la nube* (SIM-BK-01).
+* **Lo que falta saber:** recursos de los servidores, cuántas horas pueden estar sin sistema y si las
+  sucursales se conectan al ERP. Son los datos que el catálogo pide para este caso.
+* **Pregúntale ahora:** *"¿Cuántos equipos y cuántas U ocupan?"*. Fuente: *Catálogo · Colocation 1/4 de rack*.
 
-#### 3. Lo que contesta el Vendedor (leyendo a su Agente):
-> *"Te entiendo perfecto. Para que tus cajas nunca se traben aunque alguien más esté descargando archivos pesados, te voy a armar una red **Managed SD-WAN de Alestra** que le da prioridad VIP a tu facturación. Oye, para darte el precio exacto ahorita mismo: **¿cuántas computadoras tienen por tienda y en qué nube tienen su sistema?**"*
-
----
-
-### TURNO 2: Traducción Humana a Dimensionamiento Técnico + Cross-Selling
-
-#### 1. Lo que dice el Cliente:
-> *"Híjole, no sé cuántos megas gastamos, pero son como 15 computadoras por sucursal y además tenemos cámaras de seguridad. El sistema lo tenemos guardado en Amazon (AWS)."*
-
-#### 2. Lo que hace el Agente IA en el Monitor del Vendedor:
-* **Cálculo de Ingeniería Automático:** El Agente traduce `15 PCs + Cámaras de video` a un parámetro técnico exacto: **`100 Mbps simétricos por sucursal`** y llena la celda en la tabla de cotización sin intervención humana.
-* **Cross-Selling Inteligente:** Al escuchar `"Amazon (AWS)"`, el Agente conecta un nodo nuevo en el diagrama visual: **`Alestra Cloud Express`** (enlace privado directo a AWS sin pasar por el internet público para eliminar la latencia).
-* **Barra de Precisión de Cotización:** Sube a **75%**.
-* **Alerta Anti-Olvido (Último filtro técnico):**
-  > **PREGÚNTALE ESTO AHORA:** *"¿Alguna de las 10 tiendas está en una zona industrial lejana donde no llegan cables de fibra, y qué tan grave es para el negocio si se corta el cable en la calle?"*
-
-#### 3. Lo que contesta el Vendedor:
-> *"Excelente. Para esas 15 computadoras y tus cámaras te estoy calculando **100 Megas dedicados por tienda**, y además te voy a incluir **Cloud Express**, que es un túnel privado directo de Alestra hacia tu Amazon para que vuele. Última pregunta rápida: **¿alguna de tus 10 tiendas está en una zona lejana donde batallen con el cableado, y qué pasa si un día una tienda pierde conexión?**"*
+#### 3. Lo que dice el vendedor:
+> *"Entiendo; con dos apagones al año, sacar esos servidores del cuarto de la planta tiene mucho sentido. Para darte un precio hoy mismo: ¿cuántos equipos son y cuánto espacio de rack ocupan?"*
 
 ---
 
-### TURNO 3: Resolución de Factibilidad en Vivo y Cotización en 1 Clic
+### TURNO 2: dimensionamiento
 
-#### 1. Lo que dice el Cliente:
-> *"Qué bueno que preguntas, porque nuestra bodega nueva está en las afueras de Ramos Arizpe y ninguna compañía tiene postes de fibra ahí. Y la verdad no nos podemos quedar sin sistema ni 5 minutos."*
+#### 1. Lo que dice el cliente:
+> *"Son dos servidores de 2U y un switch; casi no consumen. Tenemos 3 sucursales que entran al ERP."*
 
-#### 2. Lo que hace el Agente IA en el Monitor del Vendedor:
-*(Nota para los jueces: En el proceso tradicional, esta bodega sin fibra detendría la cotización durante 2 semanas mientras ingeniería busca alternativas. El Agente lo resuelve en vivo).*
-* **Ajuste Automático de Arquitectura por Cobertura:**
-  * `9 Sucursales Urbanas`: Se mantienen con **Fibra Dedicada 100 Mbps + SD-WAN**.
-  * `1 Bodega en Ramos Arizpe (Sin Fibra)`: El Agente asigna automáticamente **`Alestra Móvil (SIM Multioperador 5G)`**, que se conecta a las 3 redes celulares del país sin requerir cableado físico.
-* **Alta Disponibilidad y Seguridad:** Al escuchar *"no podemos parar ni 5 minutos"*, agrega un enlace secundario celular de respaldo para las sucursales y activa **`Clean Pipes`** (mitigación de ataques DDoS desde el enlace).
-* **Barra de Precisión de Cotización:** Llega al **100% (Quote Ready)**.
-* **Cierre Habilitado:** Dibuja el diagrama de red completo en pantalla, calcula el total en **$4,200 USD / mes** y habilita el botón verde **"Compartir Arquitectura y Enviar Propuesta PDF"**.
+#### 2. Lo que hace el agente:
+* **Cotiza lo estándar:** *Colocation 1/4 de rack* ($7,900), *Enlace dedicado al data center* para las 3 sucursales
+  (3 × $4,200) y *Backup de servidores* para 2 servidores (2 × $420).
+* **Total parcial:** **$21,340 al mes**, más $11,000 de cargos únicos. El tablero avisa que falta un producto
+  sin precio, porque el backup inmutable todavía necesita saber cuántos TB.
+* **Pregúntale ahora:** *"¿Cuánto tiempo pueden estar sin sistema?"*. Fuente: *Catálogo · Recuperación ante desastres (DRaaS)*.
+  Es la pregunta que puede cambiar el caso: si la respuesta es menos de 4 horas, ya no es un nivel de servicio
+  estándar (regla ESC-07).
 
-#### 3. Lo que contesta el Vendedor (Cierre en la Llamada 1):
-> *"Resuelto, no necesitamos agendar otra sesión con ingeniería. Mira, te comparto mi pantalla: tus 9 tiendas quedan con fibra dedicada de 100 Megas, tu conexión directa a Amazon con Cloud Express y, para tu bodega de Ramos Arizpe donde no llegan cables, te configuré **Alestra Móvil con SIM Multioperador** para que tengas conexión desde el día uno, además de protección **Clean Pipes**. Tu inversión mensual queda en **$4,200 dólares**. Ya te envié a tu correo el PDF con el diagrama técnico y el desglose, ¿le damos para adelante?"*
+#### 3. Lo que dice el vendedor:
+> *"Perfecto, con eso ya tengo el espacio y la conexión de tus 3 sucursales. Una pregunta importante: si mañana se cae todo, ¿cuánto tiempo pueden estar sin sistema? Y, entre los dos servidores, ¿cuánta información guardan?"*
 
 ---
 
-## 4. Impacto de Negocio para Alestra (Resumen para Jueces)
+### TURNO 3: cotización y escalamiento honesto
 
-| Etapa del Proceso | Proceso Actual en Alestra (Sin Agente) | Nuevo Proceso con Nuestro Agente IA |
+#### 1. Lo que dice el cliente:
+> *"Máximo una hora; cada hora parada es producción perdida. Entre los dos servidores son como 3 TB."*
+
+#### 2. Lo que hace el agente:
+* **Completa lo estándar:** *Backup inmutable* con 3 TB (3 × $1,850). Se activa el paquete
+  **«Adiós al cuarto de servidores»** (8% de descuento en colocation, enlace y backup).
+* **Cotización:** **$24,806 al mes sin IVA ($28,775 con IVA)**, más $13,500 de cargos únicos, a 12 meses.
+  A 36 meses baja a $22,325, pero el descuento total llega a 17%: pasa del 10% que puede dar el vendedor, y el
+  tablero avisa que requiere autorización del gerente.
+* **Escalamiento honesto:** "máximo una hora" es un RTO menor a 4 h, así que se cumple la **regla ESC-07**.
+  La *Recuperación ante desastres* pasa al arquitecto y el caso queda **mixto**: el vendedor cotiza hoy lo
+  estándar, y el arquitecto entra **solo** a diseñar la recuperación, con el resumen de la llamada.
+
+#### 3. Lo que dice el vendedor (cierre en la llamada 1):
+> *"Te dejo cotizado hoy lo que resuelve los apagones: espacio en nuestro data center, el enlace de tus 3 sucursales y el respaldo de tus 3 TB, en $24,806 más IVA al mes. Para volver a operar en menos de una hora hace falta un diseño especial: le paso a nuestro arquitecto todo lo que ya me contaste, para que no tengas que repetirlo, y te busca solo para esa parte."*
+
+---
+
+## 4. Impacto para Alestra (resumen para jueces)
+
+| Etapa del proceso | Hoy (sin agente) | Con el Traductor |
 | :--- | :--- | :--- |
-| **Levantamiento de Datos** | El vendedor toma notas incompletas en papel; olvida preguntar métricas técnicas (Mbps, nube, cobertura). | El Agente guía al vendedor con alertas en vivo (**0% de datos técnicos olvidados**). |
-| **Dimensionamiento e Ingeniería** | Requiere escalar a un Ingeniero de Preventa y esperar días para traducir qué necesita el cliente. | El Agente traduce "15 PCs + cámaras" a `100 Mbps` y resuelve falta de fibra con `Alestra Móvil` al instante. |
-| **Tiempo para Entregar Cotización** | **3 a 4 sesiones (2 a 3 semanas).** Alto riesgo de que el cliente se enfríe o compre con la competencia. | **1 sola sesión (15 minutos).** El cliente recibe arquitectura visual y cotización formal antes de colgar. |
-| **Ticket Promedio (Upselling)** | El vendedor solo cotiza lo básico por miedo a complicar la llamada. | El Agente inyecta sugerencias automáticas de alto margen (`Cloud Express`, `Clean Pipes`, `SD-WAN`). |
+| **Levantamiento** | 3 sesiones en promedio; el vendedor no sabe qué preguntar. | Las preguntas clave del catálogo aparecen en vivo y "lo que falta saber" se llena en la primera llamada. |
+| **Arquitectos** | Entran casi siempre y el cliente repite todo. | Entran solo cuando una regla ESC o un producto a la medida lo pide, y solo en esa parte (aquí: la recuperación con RTO de 1 h). |
+| **Propuesta económica** | Hasta 3 semanas, armada a mano. | Lo estándar queda cotizado en la llamada, con precios del catálogo; lo a la medida sale con su resumen para el arquitecto. |
+| **Datos inventados** | — | El modelo no escribe precios ni inventa productos: solo marca SKU del catálogo, y las cuentas y los límites los revisa el código. |

@@ -85,7 +85,9 @@ export default function Tablero({
   const [plazo, setPlazo] = useState(12);
 
   const cotizacion = cotizar(productos, plazo);
-  const carril = carrilDe(cotizacion, reglas);
+  // Las reglas que marcó la IA más las que salen de las cuentas (ESC-09 por monto), sin repetir.
+  const reglasTodas = [...new Set([...reglas, ...cotizacion.reglas])];
+  const carril = carrilDe(cotizacion, reglasTodas);
 
   // El algoritmo corre en cada cambio aquí mismo; así se evalúa aunque el agente o InsForge no respondan.
   // El tipo de caso es el mismo que el de la cotización, para no mostrar dos respuestas distintas.
@@ -94,13 +96,17 @@ export default function Tablero({
     evaluar(
       [...preguntasDelCliente(conversacion), ...[...preguntasSugeridas, pregunta?.texto].flatMap((t) => preguntaDelAgente(t))],
       productos,
-      reglas.map((id) => ({ id, texto: regla(id) })),
+      reglasTodas.map((id) => ({ id, texto: regla(id) })),
       CATALOGO_IT,
     );
   const ayuda = conTipoDeCaso(ayudaBase, productos.some((p) => p.estado !== 'sugerido') ? carril : 'por definir');
   const datosListos = datos.filter((d) => d.valor).length;
   const siguienteFaltante = pregunta ? datos.findIndex((d) => !d.valor) : -1;
-  const listo = pregunta === null && productos.length > 0;
+  // Listo solo con datos completos: ningún producto esperando un dato y, si el agente sigue preguntando, todo lo que falta ya contestado.
+  const listo =
+    productos.some((p) => p.estado !== 'sugerido') &&
+    !cotizacion.lineas.some((l) => l.sinPrecio === 'falta-dato') &&
+    (pregunta === null || (datos.length > 0 && datos.every((d) => d.valor)));
   const conArquitecto = cotizacion.lineas.filter((l) => l.sinPrecio === 'arquitecto').map((l) => l.producto.nombre);
   const familiasConSenal = new Set(productos.map((p) => producto(p.sku).familia));
   const familiasSinSenal = FAMILIAS.filter((f) => !familiasConSenal.has(f.id)).map((f) => f.nombre);
@@ -250,9 +256,9 @@ export default function Tablero({
         </div>
         {productos.length > 0 && (
           <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: SECUNDARIO, lineHeight: 1.4 }}>
-            {reglas.length === 0
+            {reglasTodas.length === 0
               ? CARRILES[carril].explicacion
-              : reglas.map((id) => (
+              : reglasTodas.map((id) => (
                   <span key={id} style={{ display: 'block' }}>
                     <b style={{ color: MORADO_TEXTO, fontWeight: 600 }}>{id}</b> · {regla(id)}
                   </span>
@@ -270,6 +276,11 @@ export default function Tablero({
                 MXN al mes, sin IVA
                 {cotizacion.unico > 0 && ` · más ${moneda(cotizacion.unico)} de cargos únicos`}
               </div>
+              {cotizacion.sinPrecio > 0 && (
+                <div style={{ color: NARANJA_TEXTO, fontSize: '0.82rem', marginTop: '4px' }}>
+                  Total parcial: {cotizacion.sinPrecio === 1 ? 'falta 1 producto' : `faltan ${cotizacion.sinPrecio} productos`} sin precio
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -320,7 +331,7 @@ export default function Tablero({
               </div>
             </div>
             <p style={{ margin: '8px 0 0', fontSize: '0.78rem', color: TERCIARIO, lineHeight: 1.45 }}>
-              Con IVA ({CONDICIONES.ivaPct}%): {moneda(cotizacion.mensualConIva)} al mes · Vigencia de {CONDICIONES.vigenciaDias} días
+              Con IVA ({CONDICIONES.ivaPct}%): {moneda(cotizacion.mensualConIva)} al mes{cotizacion.sinPrecio > 0 && ' (parcial)'} · Vigencia de {CONDICIONES.vigenciaDias} días
               {cotizacion.rebasaTopeVendedor && (
                 <span style={{ display: 'block', color: NARANJA_TEXTO }}>
                   Descuento total de {Math.round(cotizacion.descuentoTotalPct)}%: arriba de {CONDICIONES.topeVendedorPct}% pide autorización del gerente.
