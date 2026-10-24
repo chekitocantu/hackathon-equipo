@@ -20,6 +20,10 @@ html, body {
   overflow-y: auto;
 }
 
+@keyframes aparecer {
+  from { opacity: 0; }
+}
+
 #root {
   width: 100%;
   min-height: 100%;

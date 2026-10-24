@@ -1,122 +1,203 @@
-import { NODOS, type EstadoNodo, type Etapa, type NodoMapa } from '../lib/simulacion';
+import type { CSSProperties } from 'react';
+import { familia, producto, unidadDe } from '../lib/catalogo';
+import type { EstadoProducto, ProductoEnEtapa } from '../lib/cotizador';
 
-// Filas del mapa: familia → solución → dato de dimensionamiento.
-const Y = [16, 128, 228];
-const ALTO = [64, 46, 46];
+// Filas del mapa: familia → producto detectado → cantidad o motivo.
+const ANCHO = 1080;
+const Y = [8, 112, 206];
+const ALTO = [58, 52, 38];
 
-const COLORES: Record<EstadoNodo, { fondo: string; borde: string; texto: string; sub: string }> = {
-  activo: { fondo: '#eaf7ff', borde: '#8fd7f7', texto: '#00507a', sub: '#0077b6' },
-  pendiente: { fondo: '#fff6eb', borde: '#ffb84d', texto: '#9a4a00', sub: '#b25000' },
-  inactivo: { fondo: '#f5f5f7', borde: '#f5f5f7', texto: '#aeaeb2', sub: '#c7c7cc' },
+export const COLORES: Record<EstadoProducto, { fondo: string; borde: string; texto: string; sub: string; punteado?: boolean }> = {
+  incluido: { fondo: '#eaf7ff', borde: '#8fd7f7', texto: '#00507a', sub: '#0077b6' },
+  pendiente: { fondo: '#fff6eb', borde: '#ffb84d', texto: '#9a4a00', sub: '#b25000', punteado: true },
+  arquitecto: { fondo: '#f6effc', borde: '#d4b3ee', texto: '#5e2585', sub: '#8944ab' },
+  sugerido: { fondo: '#ffffff', borde: '#c7c7cc', texto: '#6e6e73', sub: '#86868b', punteado: true },
 };
 
-const TRANSICION = 'opacity 0.5s ease, transform 0.5s ease, fill 0.5s ease, stroke 0.5s ease';
+const MOVIMIENTO = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), d 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
 
-// Las familias siempre se ven (en gris si no hay señal); lo demás aparece solo cuando el agente lo detecta.
-function estadoDe(etapa: Etapa, nodo: NodoMapa): EstadoNodo | null {
-  return etapa.nodos[nodo.id] ?? (nodo.nivel === 0 ? 'inactivo' : null);
+interface Nodo {
+  id: string;
+  x: number;
+  ancho: number;
+  estado: EstadoProducto;
+  lineas: string[];
+  detalle: string | null;
 }
 
-function subtitulo(etapa: Etapa, nodo: NodoMapa, estado: EstadoNodo) {
-  const activos = NODOS.filter((h) => h.padre === nodo.id && etapa.nodos[h.id] === 'activo').length;
-  if (estado === 'inactivo') return 'Sin señal aún';
-  if (estado === 'pendiente' && activos === 0) return 'Falta 1 dato';
-  if (nodo.totalServicios) return `${activos} de ${nodo.totalServicios} servicios`;
-  return activos === 1 ? '1 solución' : `${activos} soluciones`;
+/** Parte un texto en máximo dos renglones que quepan en el ancho del nodo. */
+function partir(texto: string, ancho: number, tamano: number) {
+  const max = Math.max(6, Math.floor((ancho - 18) / (tamano * 0.56)));
+  const renglones: string[] = [];
+  for (const palabra of texto.split(' ')) {
+    const ultimo = renglones[renglones.length - 1];
+    if (ultimo !== undefined && (ultimo + ' ' + palabra).length <= max) renglones[renglones.length - 1] = ultimo + ' ' + palabra;
+    else renglones.push(palabra);
+  }
+  if (renglones.length <= 2) return renglones;
+  const segundo = renglones.slice(1).join(' ');
+  return [renglones[0], segundo.length > max ? segundo.slice(0, max - 1).trimEnd() + '…' : segundo];
 }
 
-function etiquetaDe(etapa: Etapa, nodo: NodoMapa, estado: EstadoNodo | null) {
-  if (etapa.etiquetas?.[nodo.id]) return etapa.etiquetas[nodo.id];
-  if (estado === 'pendiente' && nodo.etiquetaPendiente) return nodo.etiquetaPendiente;
-  return nodo.etiqueta;
+function detalleDe(p: ProductoEnEtapa): string | null {
+  if (p.nota) return p.nota;
+  if (p.estado === 'sugerido') return 'Sugerido';
+  const unidad = unidadDe(producto(p.sku));
+  if (!unidad) return null;
+  return p.cantidad === undefined ? `¿Cuántos ${unidad}?` : `${p.cantidad} ${unidad}`;
 }
 
-export default function MapaSoluciones({ etapa }: { etapa: Etapa }) {
-  const porId = new Map(NODOS.map((n) => [n.id, n]));
-  const sinSoluciones = !NODOS.some((n) => n.nivel > 0 && etapa.nodos[n.id]);
+// La familia toma el color de lo más urgente que tenga adentro.
+function estadoFamilia(estados: EstadoProducto[]): EstadoProducto {
+  if (estados.includes('pendiente')) return 'pendiente';
+  if (estados.includes('incluido')) return 'incluido';
+  if (estados.includes('arquitecto')) return 'arquitecto';
+  return 'sugerido';
+}
+
+export default function MapaSoluciones({ productos }: { productos: ProductoEnEtapa[] }) {
+  // Cada familia recibe un ancho proporcional a cuántos productos tiene.
+  const familias: { id: string; productos: ProductoEnEtapa[] }[] = [];
+  for (const p of productos) {
+    const id = producto(p.sku).familia;
+    const grupo = familias.find((f) => f.id === id);
+    if (grupo) grupo.productos.push(p);
+    else familias.push({ id, productos: [p] });
+  }
+
+  const porProducto = productos.length ? (ANCHO - 16) / productos.length : 0;
+  let inicio = 8;
+  const raices: (Nodo & { hijos: Nodo[] })[] = familias.map((f) => {
+    const espacio = porProducto * f.productos.length;
+    const hijos = f.productos.map((p, i) => {
+      const ancho = Math.min(porProducto - 14, 220);
+      return {
+        id: p.sku,
+        x: inicio + porProducto * (i + 0.5),
+        ancho,
+        estado: p.estado,
+        lineas: partir(producto(p.sku).nombre, ancho, 13.5),
+        detalle: detalleDe(p),
+      };
+    });
+    const activos = f.productos.filter((p) => p.estado !== 'sugerido');
+    const conArquitecto = activos.filter((p) => p.estado === 'arquitecto').length;
+    const nodo = {
+      id: f.id,
+      x: inicio + espacio / 2,
+      ancho: Math.min(espacio - 16, 320),
+      estado: estadoFamilia(f.productos.map((p) => p.estado)),
+      lineas: [familia(f.id).nombre],
+      detalle:
+        conArquitecto === activos.length && activos.length > 0
+          ? 'Con arquitecto'
+          : `${activos.length} ${activos.length === 1 ? 'producto' : 'productos'}${conArquitecto ? ` · ${conArquitecto} con arquitecto` : ''}`,
+      hijos,
+    };
+    inicio += espacio;
+    return nodo;
+  });
+
+  const curva = (x1: number, y1: number, x2: number, y2: number) => {
+    const medio = (y1 + y2) / 2;
+    return `M${x1} ${y1} C${x1} ${medio}, ${x2} ${medio}, ${x2} ${y2}`;
+  };
 
   return (
     <svg
-      viewBox="0 0 1080 290"
+      viewBox={`0 0 ${ANCHO} 250`}
       role="img"
       aria-label="Mapa de soluciones detectadas en la llamada"
       // Ocupa todo el contenedor (que debe tener position relative) y se escala sin deformarse.
       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}
     >
-      <text
-        x={540}
-        y={180}
-        textAnchor="middle"
-        style={{ fill: '#aeaeb2', fontSize: 16, opacity: sinSoluciones ? 1 : 0, transition: TRANSICION }}
-      >
-        Las soluciones se abren aquí conforme el cliente habla
-      </text>
-      {NODOS.filter((n) => n.padre).map((nodo) => {
-        const padre = porId.get(nodo.padre!)!;
-        const estado = estadoDe(etapa, nodo);
-        const y1 = Y[padre.nivel] + ALTO[padre.nivel];
-        const y2 = Y[nodo.nivel];
-        const medio = (y1 + y2) / 2;
-        return (
-          <path
-            key={`linea-${nodo.id}`}
-            d={`M${padre.x} ${y1} C${padre.x} ${medio}, ${nodo.x} ${medio}, ${nodo.x} ${y2}`}
-            fill="none"
-            stroke={COLORES[estado ?? 'inactivo'].borde}
-            strokeWidth={1.5}
-            strokeDasharray={estado === 'pendiente' ? '5 5' : undefined}
-            style={{ opacity: estado ? 1 : 0, transition: TRANSICION }}
-          />
-        );
-      })}
+      {raices.length === 0 && (
+        <text x={ANCHO / 2} y={125} textAnchor="middle" style={{ fill: '#aeaeb2', fontSize: 16 }}>
+          Las soluciones se abren aquí conforme el cliente habla
+        </text>
+      )}
 
-      {NODOS.map((nodo) => {
-        const estado = estadoDe(etapa, nodo);
-        const color = COLORES[estado ?? 'inactivo'];
-        const y = Y[nodo.nivel];
-        const alto = ALTO[nodo.nivel];
-        const esFamilia = nodo.nivel === 0;
-        return (
-          <g
-            key={nodo.id}
-            style={{
-              opacity: estado ? 1 : 0,
-              transform: `translateY(${estado ? 0 : -10}px)`,
-              transition: TRANSICION,
-            }}
-          >
-            <rect
-              x={nodo.x - nodo.ancho / 2}
-              y={y}
-              width={nodo.ancho}
-              height={alto}
-              rx={esFamilia ? 16 : 12}
-              strokeWidth={1.5}
-              strokeDasharray={estado === 'pendiente' ? '5 5' : undefined}
-              style={{ fill: color.fondo, stroke: color.borde, transition: TRANSICION }}
+      {raices.flatMap((r) =>
+        r.hijos.flatMap((h) => {
+          const color = COLORES[h.estado];
+          const lineas = [
+            <Linea key={`l-${h.id}`} d={curva(r.x, Y[0] + ALTO[0], h.x, Y[1])} color={color.borde} punteado={color.punteado} />,
+          ];
+          if (h.detalle) {
+            lineas.push(
+              <Linea key={`l2-${h.id}`} d={curva(h.x, Y[1] + ALTO[1], h.x, Y[2])} color={color.borde} punteado={color.punteado} />,
+            );
+          }
+          return lineas;
+        }),
+      )}
+
+      {raices.map((r) => (
+        <Caja key={r.id} nodo={r} nivel={0} />
+      ))}
+      {raices.flatMap((r) => r.hijos.map((h) => <Caja key={h.id} nodo={h} nivel={1} />))}
+      {raices.flatMap((r) =>
+        r.hijos
+          .filter((h) => h.detalle)
+          .map((h) => (
+            <Caja
+              key={`d-${h.id}`}
+              nivel={2}
+              nodo={{ ...h, id: `d-${h.id}`, ancho: Math.min(h.ancho, 180), lineas: [h.detalle!], detalle: null }}
             />
-            <text
-              x={nodo.x}
-              y={esFamilia ? y + 28 : y + alto / 2 + 5}
-              textAnchor="middle"
-              style={{
-                fill: color.texto,
-                fontSize: esFamilia ? 20 : 13.5,
-                fontWeight: esFamilia ? 700 : 600,
-                letterSpacing: esFamilia ? '-0.01em' : undefined,
-                transition: TRANSICION,
-              }}
-            >
-              {etiquetaDe(etapa, nodo, estado)}
-            </text>
-            {esFamilia && estado && (
-              <text x={nodo.x} y={y + 50} textAnchor="middle" style={{ fill: color.sub, fontSize: 13.5, fontWeight: 400, transition: TRANSICION }}>
-                {subtitulo(etapa, nodo, estado)}
-              </text>
-            )}
-          </g>
-        );
-      })}
+          )),
+      )}
     </svg>
+  );
+}
+
+function Linea({ d, color, punteado }: { d: string; color: string; punteado?: boolean }) {
+  return (
+    <path
+      d={d}
+      fill="none"
+      stroke={color}
+      strokeWidth={1.5}
+      strokeDasharray={punteado ? '5 5' : undefined}
+      // `d` como propiedad CSS permite que la curva se deslice junto con los nodos.
+      style={{ d: `path('${d}')`, transition: MOVIMIENTO, animation: 'aparecer 0.45s ease both' } as CSSProperties}
+    />
+  );
+}
+
+function Caja({ nodo, nivel }: { nodo: Nodo; nivel: 0 | 1 | 2 }) {
+  const color = COLORES[nodo.estado];
+  const alto = ALTO[nivel];
+  const tamano = nivel === 0 ? 19 : nivel === 1 ? 13.5 : 12.5;
+  const interlineado = tamano + 3;
+  const conDetalle = nivel === 0 && nodo.detalle;
+  const bloque = nodo.lineas.length * interlineado + (conDetalle ? 18 : 0);
+  const primerRenglon = (alto - bloque) / 2 + tamano - 2;
+
+  return (
+    <g style={{ transform: `translate(${nodo.x}px, ${Y[nivel]}px)`, transition: MOVIMIENTO, animation: 'aparecer 0.45s ease both' }}>
+      <rect
+        x={-nodo.ancho / 2}
+        y={0}
+        width={nodo.ancho}
+        height={alto}
+        rx={nivel === 0 ? 16 : 12}
+        strokeWidth={1.5}
+        strokeDasharray={color.punteado ? '5 5' : undefined}
+        style={{ fill: color.fondo, stroke: color.borde, transition: 'fill 0.4s ease, stroke 0.4s ease' }}
+      />
+      <text textAnchor="middle" style={{ fill: nivel === 2 ? color.sub : color.texto, fontSize: tamano, fontWeight: nivel === 2 ? 600 : 700 }}>
+        {nodo.lineas.map((l, i) => (
+          <tspan key={i} x={0} y={primerRenglon + i * interlineado}>
+            {l}
+          </tspan>
+        ))}
+      </text>
+      {conDetalle && (
+        <text x={0} y={primerRenglon + nodo.lineas.length * interlineado + 2} textAnchor="middle" style={{ fill: color.sub, fontSize: 13 }}>
+          {nodo.detalle}
+        </text>
+      )}
+    </g>
   );
 }
