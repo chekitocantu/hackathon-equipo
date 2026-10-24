@@ -175,10 +175,16 @@ export default function Tablero({
             {pregunta ? (
               <>
                 <p style={{ margin: 0, fontSize: '0.88rem', fontWeight: 600, color: AZUL_TEXTO }}>Pregúntale ahora</p>
+                {pregunta.fuente.startsWith('Banco de objeciones') && (
+                  <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: TERCIARIO }}>Pausa 2–3 s y reconoce la preocupación antes de responder.</p>
+                )}
                 <p style={{ margin: '6px 0', fontSize: 'clamp(1.1rem, 2.4vh, 1.4rem)', fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.02em' }}>
                   {pregunta.texto}
                 </p>
                 {pregunta.motivo && <p style={{ margin: 0, fontSize: '0.9rem', color: SECUNDARIO }}>{pregunta.motivo.replace(/\.?$/, '.')}</p>}
+                {pregunta.diMejor && (
+                  <p style={{ margin: '4px 0 0', fontSize: '0.86rem', color: SECUNDARIO }}><strong>Di mejor:</strong> {pregunta.diMejor}</p>
+                )}
                 {pregunta.cuidado && (
                   <p style={{ margin: '4px 0 0', fontSize: '0.86rem', color: NARANJA_TEXTO }}>Evita: {pregunta.cuidado}.</p>
                 )}

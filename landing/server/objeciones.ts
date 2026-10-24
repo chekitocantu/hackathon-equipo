@@ -50,5 +50,28 @@ export function yaLaHizo(pregunta: string, delVendedor: string[]) {
 /** La pregunta que toca: la primera del banco que el vendedor todavía no hizo en esta llamada. */
 export function siguientePregunta(objecion: Objecion, transcripcion: { quien: string; texto: string }[]) {
   const delVendedor = transcripcion.filter((t) => /vendedor/i.test(t.quien)).map((t) => t.texto);
-  return objecion.preguntas.find((p) => !yaLaHizo(p, delVendedor)) ?? null;
+  const diagnostico = objecion.preguntas.find((p) => !yaLaHizo(p, delVendedor));
+  if (diagnostico) return diagnostico;
+
+  // Después de explorar la preocupación, aísla la objeción con una prueba hipotética;
+  // una vez contestada, acuerda un siguiente paso con fecha, como recomienda el informe.
+  const aislamiento = 'Si resolvemos esta preocupación, ¿avanzaría con el siguiente paso?';
+  if (!yaLaHizo(aislamiento, delVendedor)) {
+    const ultimaDeDiagnostico = [...objecion.preguntas].reverse().find((p) => yaLaHizo(p, delVendedor));
+    return ultimaDeDiagnostico && !respondidaDespues(ultimaDeDiagnostico, transcripcion) ? ultimaDeDiagnostico : aislamiento;
+  }
+  if (!respondidaDespues(aislamiento, transcripcion)) return aislamiento;
+
+  const siguientePaso = '¿Qué fecha le funciona para revisar la respuesta y acordar el siguiente paso?';
+  if (!yaLaHizo(siguientePaso, delVendedor)) return siguientePaso;
+  return respondidaDespues(siguientePaso, transcripcion) ? null : siguientePaso;
+}
+
+/** La siguiente fase no aparece hasta que el cliente haya respondido a la pregunta anterior. */
+function respondidaDespues(pregunta: string, transcripcion: { quien: string; texto: string }[]) {
+  let ultima = -1;
+  transcripcion.forEach((turno, indice) => {
+    if (/vendedor/i.test(turno.quien) && yaLaHizo(pregunta, [turno.texto])) ultima = indice;
+  });
+  return ultima >= 0 && transcripcion.slice(ultima + 1).some((turno) => /cliente/i.test(turno.quien));
 }

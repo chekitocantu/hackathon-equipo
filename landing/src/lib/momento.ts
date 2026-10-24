@@ -171,6 +171,7 @@ export function useColaSugerencias(
             motivo: p.motivo,
             fuente: p.fuente,
             cuidado: p.cuidado ?? null,
+            diMejor: p.diMejor ?? null,
             oportunidad,
             hora: reloj(ahora - e.inicioLlamada),
             hecha: false,

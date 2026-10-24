@@ -287,7 +287,17 @@ function conObjecion<T extends { objecionId: string | null; pregunta: { texto: s
   return {
     ...resto,
     pregunta: texto
-      ? { texto, motivo: `Objeción: «${o.objecion}». Di mejor: «${o.di_mejor}»`, fuente: `${FUENTE_OBJECIONES} · ${o.id}`, cuidado: o.no_decir[0] ?? null }
+      ? {
+          texto,
+          motivo: texto.startsWith('Si resolvemos esta preocupación')
+            ? 'Aísla la objeción antes de responder'
+            : texto.startsWith('¿Qué fecha le funciona')
+              ? 'Acuerda un siguiente paso con fecha'
+              : `Objeción: «${o.objecion}»`,
+          fuente: `${FUENTE_OBJECIONES} · ${o.id}`,
+          cuidado: o.no_decir[0] ?? null,
+          diMejor: o.di_mejor,
+        }
       : resto.pregunta,
     objecion: { id: o.id, categoria: o.categoria, objecion: o.objecion, diMejor: o.di_mejor, noDecir: o.no_decir, revisarLegal: o.revisar_legal, escalar: o.escalar },
   };

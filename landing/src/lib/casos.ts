@@ -11,6 +11,8 @@ export interface Pregunta {
   fuente: string;
   /** Si viene del banco de objeciones: lo que el vendedor no debe decir en ese momento. */
   cuidado?: string | null;
+  /** Frase de reconocimiento sugerida por el banco, sin implicar que el vendedor esté de acuerdo. */
+  diMejor?: string | null;
 }
 
 export interface Etapa {

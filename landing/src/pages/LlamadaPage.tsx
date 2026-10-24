@@ -230,6 +230,18 @@ export default function LlamadaPage() {
     inicio,
     () => fuente?.tipo === 'pestaña' && niveles.current.Cliente > 0.015,
   );
+  // El tablero principal muestra la pregunta cuando la cola confirma una pausa,
+  // igual que el panel flotante; no adelanta la sugerencia mientras el cliente habla.
+  const preguntaEnPausa = sugerencias.items.find((item) => item.actual);
+  const preguntaVisible: Pregunta | null = preguntaEnPausa
+    ? {
+        texto: preguntaEnPausa.texto,
+        motivo: preguntaEnPausa.motivo,
+        fuente: preguntaEnPausa.fuente,
+        cuidado: preguntaEnPausa.cuidado,
+        diMejor: preguntaEnPausa.diMejor,
+      }
+    : null;
 
   /** Recibe la conversación completa de cualquier fuente; si cambió algo, el agente la vuelve a leer. */
   function recibir(lista: Intervencion[]) {
@@ -550,15 +562,17 @@ export default function LlamadaPage() {
           productos={analisis.productos}
           datos={analisis.datos}
           reglas={analisis.reglas}
-          pregunta={analisis.pregunta}
+          pregunta={preguntaVisible}
           conversacion={intervenciones.map(({ quien, texto }) => ({ quien, texto }))}
           preguntasSugeridas={sugeridas}
           ayuda={analisis.ayuda}
           cliente={clienteDeLlamada()}
           esperando={
-            intervenciones.length === 0
-              ? 'La primera pregunta aparece cuando el cliente cuente su problema.'
-              : 'El agente todavía no detecta un producto del catálogo. Pregunta qué problema quieren resolver.'
+            analisis.pregunta
+              ? 'Esperando una pausa para mostrar la pregunta sugerida.'
+              : intervenciones.length === 0
+                ? 'La primera pregunta aparece cuando el cliente cuente su problema.'
+                : 'El agente todavía no detecta un producto del catálogo. Pregunta qué problema quieren resolver.'
           }
         />
       )}
