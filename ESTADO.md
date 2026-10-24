@@ -25,7 +25,7 @@ Ya tenemos el reto (RETO.md), la idea base (el Traductor), una landing, un dashb
 | Karim | Dashboard para ventas |
 | Marco | Dolores de clientes: reseñas negativas de apps que hacen cosas como las de Alestra (sirve para el pitch y para saber qué avisar) |
 | Sergio | Notetaker con transcripción en vivo → [notas/notetaker.md](notas/notetaker.md) |
-| Rubén | Cerebro del Traductor: avisa en vivo lo que se le pasa a ventas y al final manda a cada área (IT, Finanzas) su reporte con sus términos y acrónimos |
+| Rubén | Cerebro del Traductor: avisa en vivo lo que se le pasa a ventas y al final manda a cada área (IT, Finanzas) su reporte con sus términos y acrónimos → [notas/lenguaje-traductor.md](notas/lenguaje-traductor.md) |
 
 Lo que une al notetaker con el cerebro es el formato de los segmentos de la transcripción: propuesta en
 [notas/notetaker.md](notas/notetaker.md#formato-que-le-llega-al-cerebro-propuesta-para-brioness47).
