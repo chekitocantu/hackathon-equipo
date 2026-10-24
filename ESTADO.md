@@ -19,7 +19,7 @@ Ya tenemos el reto (RETO.md), la idea base (el Traductor), una landing, un dashb
 (`catalogo-simulado/`). Falta acordar el MVP (#1) y el stack (#2). Próximo checkpoint: 17:00, prototipo funcional.
 El tablero en vivo (/llamada) ya guarda cada llamada en InsForge, muestra lo que el cliente dijo antes y clientes
 parecidos, y dice si hace falta IT (8 de 10 preguntas técnicas, o productos y reglas ESC que llevan arquitecto): #9.
-Ya no necesita Vexa: escucha la pestaña de la videollamada o el micrófono (transcribe con `gpt-4o-mini-transcribe`), y el
+Ya no necesita Vexa: escucha la pestaña de la videollamada o el micrófono (transcribe con `whisper-large-v3-turbo`; el agente es `claude-haiku-5.5`, ambos vía OpenRouter), y el
 vendedor ve un panel con las últimas 10 preguntas sugeridas, que entran solo en pausas o cuando el cliente toca el tema y
 se pueden fijar con un clic: #12.
 
