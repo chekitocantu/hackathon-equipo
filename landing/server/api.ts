@@ -196,29 +196,52 @@ async function analizar(
         .map((d) => `- ${d.etiqueta}: ${d.valor} (${d.fecha})`)
         .join('\n')}\n\n`
     : '';
-  const respuesta = await preguntarAlAgente(config, {
-    model: config.modeloAgente,
-    temperature: 0.2,
-    messages: [
-      // El catálogo es igual en cada llamada; se marca para caché y así cada turno responde más rápido.
-      { role: 'system', content: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }] },
-      { role: 'user', content: `${antes}Transcripción de la videollamada hasta ahora:\n\n${conversacion}\n\nDevuelve solo el JSON.` },
-    ],
-  });
-  const texto = String(respuesta.choices?.[0]?.message?.content ?? '');
-  const json = texto.slice(texto.indexOf('{'), texto.lastIndexOf('}') + 1);
-  try {
-    return validar(JSON.parse(json), catalogo);
-  } catch (e) {
-    // Si el modelo no devuelve JSON válido, deja rastro para saber por qué (corte por tokens, texto extra…).
-    console.warn('[agente] JSON inválido:', {
-      fin: respuesta.choices?.[0]?.finish_reason,
-      uso: respuesta.usage,
-      inicio: texto.slice(0, 400),
-      final: texto.slice(-200),
-    });
-    throw e;
+  const mensajes: { role: string; content: unknown }[] = [
+    // El catálogo es igual en cada llamada; se marca para caché y así cada turno responde más rápido.
+    { role: 'system', content: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }] },
+    { role: 'user', content: `${antes}Transcripción de la videollamada hasta ahora:\n\n${conversacion}\n\nDevuelve solo el JSON.` },
+  ];
+
+  // Los modelos rápidos a veces dejan el JSON mal formado (una coma o una comilla de más).
+  // Si pasa, se le muestra el error y se le pide que lo corrija una vez antes de rendirse.
+  for (let intento = 1; ; intento++) {
+    const respuesta = await preguntarAlAgente(config, { model: config.modeloAgente, temperature: 0.2, messages: mensajes });
+    const texto = String(respuesta.choices?.[0]?.message?.content ?? '');
+    try {
+      return validar(leerJson(texto), catalogo);
+    } catch (e) {
+      const motivo = e instanceof Error ? e.message : String(e);
+      // Deja rastro de por qué: corte por tokens (fin "length"), texto fuera del objeto o JSON mal formado.
+      console.warn('[agente] JSON inválido:', {
+        intento,
+        motivo,
+        fin: respuesta.choices?.[0]?.finish_reason,
+        uso: respuesta.usage,
+        inicio: texto.slice(0, 400),
+        final: texto.slice(-200),
+      });
+      if (intento >= 2) throw new Error(`El agente regresó una respuesta que no se pudo leer (${motivo})`);
+      // Si llegó vacío no hay nada que corregir: se repite la misma petición.
+      if (texto.trim()) {
+        mensajes.push(
+          { role: 'assistant', content: texto },
+          {
+            role: 'user',
+            content: `Ese JSON no es válido (${motivo}). Devuelve el mismo contenido como JSON válido: comillas dobles escapadas dentro de los textos, sin comas sobrantes y sin texto fuera del objeto.`,
+          },
+        );
+      }
+    }
   }
+}
+
+/** Saca el objeto JSON de la respuesta y arregla los descuidos más comunes antes de leerlo. */
+function leerJson(texto: string): Record<string, unknown> {
+  const json = texto
+    .slice(texto.indexOf('{'), texto.lastIndexOf('}') + 1)
+    .replace(/[“”]/g, '"')
+    .replace(/,\s*([}\]])/g, '$1');
+  return JSON.parse(json);
 }
 
 /** Lo que diga el modelo pasa por aquí: solo sobreviven productos y reglas que existen en el catálogo. */
