@@ -27,3 +27,6 @@ Thumbs.db
 
 # Ajustes locales de Claude Code
 .claude/settings.local.json
+
+# Materiales del patrocinador que no se pueden publicar
+datos-privados/

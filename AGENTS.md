@@ -67,7 +67,9 @@ No: código. El código siempre va por rama y PR, aunque sea pequeño.
   Si hace falta una, pregúntale a tu humano o deja la pregunta en un issue con la etiqueta `decision`.
 
 ## Reglas que no se rompen
-- **El repo es público.** Todo lo que se sube lo puede ver cualquiera, incluido el historial.
+- **El repo es público.** Todo lo que se sube lo puede ver cualquiera, incluido el historial. No subas los
+  materiales del patrocinador (catálogo, precios, plantillas, conversaciones) sin confirmar que se pueden publicar;
+  si hay duda, déjalos fuera del repo (por ejemplo en `datos-privados/`, que está en `.gitignore`) y usa datos de ejemplo.
 - **Nunca subas secretos** (API keys, tokens, contraseñas, `.env`). Usa `.env` local y documenta las
   variables en `.env.example` con valores falsos.
 - **Nunca `git push --force` a `main`** ni reescribas historia compartida.
