@@ -5,8 +5,10 @@ import MapaSoluciones, { COLORES } from './MapaSoluciones';
 import type { Pregunta } from '../lib/casos';
 import { CONDICIONES, FAMILIAS, producto, regla } from '../lib/catalogo';
 import { carrilDe, cotizar, type Carril, type LineaCotizada, type ProductoEnEtapa } from '../lib/cotizador';
+import { conTipoDeCaso, evaluar, preguntaDelAgente, preguntasDelCliente, type Ayuda, type ProductoCatalogo } from '../lib/ayuda';
 import {
   AZUL,
+  AZUL_BOTON,
   AZUL_TEXTO,
   botonPrimario,
   botonTexto,
@@ -49,13 +51,53 @@ interface TableroProps {
   alHacerPregunta?: () => void;
   /** Texto mientras todavía no hay nada que preguntar ni cotizar. */
   esperando?: string;
+  /** Lo dicho hasta ahora; de aquí salen las preguntas del cliente para el algoritmo de ayuda de IT. */
+  conversacion: { quien: string; texto: string }[];
+  /** Preguntas que el agente ya le sugirió al vendedor en turnos anteriores (la actual va en `pregunta`). */
+  preguntasSugeridas?: string[];
+  /** Si el servidor ya evaluó la llamada completa (con lo guardado en InsForge), se usa esa en vez de la local. */
+  ayuda?: Ayuda | null;
 }
 
-export default function Tablero({ mensaje, productos, datos, reglas, pregunta, apilado, alHacerPregunta, esperando }: TableroProps) {
+const CATALOGO_IT = {
+  get: (sku: string): ProductoCatalogo | undefined => {
+    try {
+      return producto(sku);
+    } catch {
+      return undefined;
+    }
+  },
+};
+
+export default function Tablero({
+  mensaje,
+  productos,
+  datos,
+  reglas,
+  pregunta,
+  apilado,
+  alHacerPregunta,
+  esperando,
+  conversacion,
+  preguntasSugeridas = [],
+  ayuda: ayudaServidor,
+}: TableroProps) {
   const [plazo, setPlazo] = useState(12);
 
   const cotizacion = cotizar(productos, plazo);
   const carril = carrilDe(cotizacion, reglas);
+
+  // El algoritmo corre en cada cambio aquí mismo; así se evalúa aunque el agente o InsForge no respondan.
+  // El tipo de caso es el mismo que el de la cotización, para no mostrar dos respuestas distintas.
+  const ayudaBase =
+    ayudaServidor ??
+    evaluar(
+      [...preguntasDelCliente(conversacion), ...[...preguntasSugeridas, pregunta?.texto].flatMap((t) => preguntaDelAgente(t))],
+      productos,
+      reglas.map((id) => ({ id, texto: regla(id) })),
+      CATALOGO_IT,
+    );
+  const ayuda = conTipoDeCaso(ayudaBase, productos.some((p) => p.estado !== 'sugerido') ? carril : 'por definir');
   const datosListos = datos.filter((d) => d.valor).length;
   const siguienteFaltante = pregunta ? datos.findIndex((d) => !d.valor) : -1;
   const listo = pregunta === null && productos.length > 0;
@@ -177,6 +219,9 @@ export default function Tablero({ mensaje, productos, datos, reglas, pregunta, a
             })}
           </section>
         </div>
+
+        {/* Algoritmo de ayuda de IT: si hace falta un especialista y para qué */}
+        <ApoyoIT ayuda={ayuda} apilado={apilado} />
       </div>
 
       {/* ── Barra lateral: cotización siempre a la vista ── */}
@@ -314,6 +359,64 @@ export default function Tablero({ mensaje, productos, datos, reglas, pregunta, a
         <p style={{ margin: '10px 0 0', fontSize: '0.72rem', color: TERCIARIO, textAlign: 'center' }}>Precios del catálogo simulado del hackathon</p>
       </aside>
     </div>
+  );
+}
+
+const NIVELES_IT: Record<Ayuda['nivel'], { color: string; texto: string; titulo: string }> = {
+  no: { color: VERDE, texto: VERDE_TEXTO, titulo: 'No: lo resuelves tú' },
+  consulta: { color: NARANJA, texto: NARANJA_TEXTO, titulo: 'Sí, para una parte' },
+  acompaña: { color: MORADO, texto: MORADO_TEXTO, titulo: 'Sí: pide un especialista de IT' },
+};
+
+/** "¿Necesitas a alguien especializado de IT?": la respuesta, el conteo de preguntas técnicas y qué sí y qué no le toca a IT. */
+function ApoyoIT({ ayuda, apilado }: { ayuda: Ayuda; apilado: boolean }) {
+  const nivel =
+    ayuda.nivel === 'no' && ayuda.tipoCaso === 'por definir' ? { color: SEPARADOR, texto: TERCIARIO, titulo: 'Aún no se sabe' } : NIVELES_IT[ayuda.nivel];
+  const proporcion = ayuda.total ? ayuda.tecnicas / ayuda.total : 0;
+  const lista = (puntos: Ayuda['entra'], vacio: string) =>
+    puntos.length ? (
+      puntos.slice(0, 3).map((p) => (
+        <div key={p.tema + p.fuente} style={{ fontSize: '0.84rem', lineHeight: 1.35, marginTop: '4px' }}>
+          <span style={{ color: TEXTO, fontWeight: 600 }}>{p.tema}</span> <span style={{ color: SECUNDARIO }}>· {p.motivo}</span>
+        </div>
+      ))
+    ) : (
+      <div style={{ fontSize: '0.84rem', color: TERCIARIO, marginTop: '4px' }}>{vacio}</div>
+    );
+
+  return (
+    <section style={{ ...tarjeta, padding: '14px 20px', boxShadow: `inset 4px 0 0 ${nivel.color}` }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <h3 style={{ ...tituloTarjeta, fontSize: '1rem' }}>¿Necesitas a alguien especializado de IT?</h3>
+        <span style={{ fontSize: '0.95rem', fontWeight: 700, color: nivel.texto }}>{nivel.titulo}</span>
+        <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: SECUNDARIO }}>
+          <span style={{ width: '80px', height: '6px', borderRadius: '3px', backgroundColor: SEPARADOR, overflow: 'hidden' }}>
+            <span
+              style={{
+                display: 'block',
+                width: `${Math.round(proporcion * 100)}%`,
+                height: '100%',
+                backgroundColor: proporcion >= ayuda.umbral ? MORADO : AZUL_BOTON,
+              }}
+            />
+          </span>
+          {ayuda.tecnicas} de {ayuda.total} preguntas técnicas · se pide IT desde {Math.round(ayuda.umbral * 10)} de 10
+        </span>
+      </div>
+      <p style={{ margin: '4px 0 0', fontSize: '0.86rem', color: SECUNDARIO }}>
+        Caso <b style={{ color: TEXTO }}>{ayuda.tipoCaso}</b> · {ayuda.aviso}
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: apilado ? '1fr' : '1fr 1fr', gap: '16px', marginTop: '8px' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: '0.74rem', fontWeight: 700, color: MORADO_TEXTO, letterSpacing: '0.03em' }}>SÍ ENTRA EL ESPECIALISTA</div>
+          {lista(ayuda.entra, 'Nada por ahora.')}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: '0.74rem', fontWeight: 700, color: VERDE_TEXTO, letterSpacing: '0.03em' }}>NO HACE FALTA</div>
+          {lista(ayuda.noEntra, 'Aparece cuando se detecte un producto estándar.')}
+        </div>
+      </div>
+    </section>
   );
 }
 

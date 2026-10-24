@@ -18,8 +18,8 @@ import {
   TEXTO,
   useAnchoVentana,
   VERDE,
-  VERDE_TEXTO,
 } from '../components/tema';
+import type { Ayuda } from '../lib/ayuda';
 import { conversacionDeGuion, GUIONES, type Pregunta } from '../lib/casos';
 import type { ProductoEnEtapa } from '../lib/cotizador';
 import { Segmentador, type Segmento } from '../lib/grabador';
@@ -57,24 +57,6 @@ interface Analisis {
 interface Memoria {
   yaSabemos: { etiqueta: string; valor: string; fecha: string }[];
   similares: { empresa: string; industria: string | null; comun: string; productos: string[]; it: string | null }[];
-}
-
-interface PuntoIT {
-  tema: string;
-  motivo: string;
-  fuente: string;
-}
-
-interface Ayuda {
-  tipoCaso: 'estándar' | 'mixto' | 'a la medida' | 'por definir';
-  nivel: 'no' | 'consulta' | 'acompaña';
-  tecnicas: number;
-  total: number;
-  /** Proporción de preguntas técnicas a partir de la cual se pide IT (hoy 0.8 = 8 de 10). */
-  umbral: number;
-  entra: PuntoIT[];
-  noEntra: PuntoIT[];
-  aviso: string;
 }
 
 interface SegmentoNotetaker {
@@ -132,6 +114,8 @@ export default function LlamadaPage() {
   const [ahora, setAhora] = useState(Date.now());
   const [indiceDemo, setIndiceDemo] = useState(0);
   const [verTranscripcion, setVerTranscripcion] = useState(false);
+  // Cada pregunta que el agente sugirió en la llamada: cuentan para el algoritmo de ayuda de IT.
+  const [sugeridas, setSugeridas] = useState<string[]>([]);
 
   const recursos = useRef<{ segmentadores: Segmentador[]; pistas: MediaStreamTrack[] }>({ segmentadores: [], pistas: [] });
   const niveles = useRef<Record<Quien, number>>({ Cliente: 0, Vendedor: 0 });
@@ -250,6 +234,8 @@ export default function LlamadaPage() {
         }),
       );
       setAnalisis(resultado);
+      const nueva = resultado.pregunta?.texto;
+      if (nueva) setSugeridas((s) => (s.includes(nueva) ? s : [...s, nueva]));
       setAviso(null);
     } catch (e) {
       setAviso(`Agente: ${e instanceof Error ? e.message : e}`);
@@ -278,6 +264,7 @@ export default function LlamadaPage() {
     firma.current = '';
     setIntervenciones([]);
     setAnalisis(SIN_ANALISIS);
+    setSugeridas([]);
     setAviso(null);
     setError(null);
     setEstadoBot(null);
@@ -482,7 +469,6 @@ export default function LlamadaPage() {
         </div>
       </header>
 
-      {!verTranscripcion && analisis.ayuda && <PanelAyuda ayuda={analisis.ayuda} apilado={apilado} />}
       {!verTranscripcion && analisis.memoria && <PanelMemoria memoria={analisis.memoria} apilado={apilado} />}
 
       {verTranscripcion ? (
@@ -499,6 +485,9 @@ export default function LlamadaPage() {
           datos={analisis.datos}
           reglas={analisis.reglas}
           pregunta={analisis.pregunta}
+          conversacion={intervenciones.map(({ quien, texto }) => ({ quien, texto }))}
+          preguntasSugeridas={sugeridas}
+          ayuda={analisis.ayuda}
           esperando={
             intervenciones.length === 0
               ? 'La primera pregunta aparece cuando el cliente cuente su problema.'
@@ -723,52 +712,6 @@ function Transcripcion({ intervenciones }: { intervenciones: Intervencion[] }) {
           <span style={{ fontSize: '0.95rem', lineHeight: 1.45 }}>{i.texto}</span>
         </div>
       ))}
-    </section>
-  );
-}
-
-/** ¿Necesitas a IT? Tipo de caso, cuántas preguntas son técnicas y qué partes SÍ y cuáles NO llevan ingeniero. */
-function PanelAyuda({ ayuda, apilado }: { ayuda: Ayuda; apilado: boolean }) {
-  const color = ayuda.nivel === 'no' ? VERDE : ayuda.nivel === 'consulta' ? NARANJA : ROJO;
-  const textoColor = ayuda.nivel === 'no' ? VERDE_TEXTO : ayuda.nivel === 'consulta' ? NARANJA_TEXTO : ROJO;
-  const titulo = ayuda.nivel === 'no' ? 'No necesitas a IT' : ayuda.nivel === 'consulta' ? 'IT revisa una parte' : 'Pide apoyo de IT';
-  const proporcion = ayuda.total ? ayuda.tecnicas / ayuda.total : 0;
-  const rotulo: CSSProperties = { margin: '0 0 6px', fontSize: '0.78rem', fontWeight: 700, color: TERCIARIO, letterSpacing: '0.02em' };
-  const lista = (puntos: PuntoIT[], vacio: string) =>
-    puntos.length ? (
-      puntos.slice(0, 4).map((p) => (
-        <p key={p.tema + p.fuente} style={{ margin: '0 0 4px', fontSize: '0.86rem', color: TEXTO }}>
-          <strong>{p.tema}</strong> <span style={{ color: SECUNDARIO }}>· {p.motivo}</span>
-        </p>
-      ))
-    ) : (
-      <p style={{ margin: 0, fontSize: '0.86rem', color: TERCIARIO }}>{vacio}</p>
-    );
-  return (
-    <section style={{ ...tarjeta, padding: '14px 20px', display: 'grid', gap: '12px', borderLeft: `4px solid ${color}`, borderRadius: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '1.05rem', fontWeight: 800, color: textoColor }}>{titulo}</span>
-        <Chip>Caso {ayuda.tipoCaso}</Chip>
-        {ayuda.total > 0 && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: SECUNDARIO }}>
-            <span style={{ width: '90px', height: '6px', borderRadius: '3px', backgroundColor: SEPARADOR, overflow: 'hidden' }}>
-              <span style={{ display: 'block', width: `${Math.round(proporcion * 100)}%`, height: '100%', backgroundColor: proporcion >= ayuda.umbral ? ROJO : AZUL_BOTON }} />
-            </span>
-            {ayuda.tecnicas} de {ayuda.total} preguntas técnicas
-          </span>
-        )}
-        <span style={{ fontSize: '0.88rem', color: TEXTO, flex: '1 1 260px' }}>{ayuda.aviso}</span>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: apilado ? '1fr' : '1fr 1fr', gap: '18px' }}>
-        <div style={{ minWidth: 0 }}>
-          <p style={rotulo}>SÍ ENTRA EL INGENIERO</p>
-          {lista(ayuda.entra, 'Nada por ahora.')}
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <p style={rotulo}>NO HACE FALTA: LO RESUELVES TÚ</p>
-          {lista(ayuda.noEntra, 'Todavía no hay productos estándar.')}
-        </div>
-      </div>
     </section>
   );
 }
