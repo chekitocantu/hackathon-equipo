@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Traductor · Notetaker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./estilos.css">
+</head>
+<body>
+  <header>
+    <h1>Notetaker del Traductor</h1>
+    <p class="subtitulo">Transcripción en vivo + corrección con DeepSeek</p>
+  </header>
+
+  <section class="controles">
+    <button id="btn-mic" type="button">Solo micrófono (reunión en persona)</button>
+    <button id="btn-llamada" type="button">Micrófono + audio de la llamada</button>
+    <button id="btn-parar" type="button" disabled>Detener</button>
+    <span id="estado">Listo</span>
+  </section>
+
+  <section class="medidores">
+    <div class="medidor">
+      <span>Tú (micrófono)</span>
+      <div class="barra"><div id="nivel-mic"></div></div>
+    </div>
+    <div class="medidor">
+      <span>Llamada</span>
+      <div class="barra"><div id="nivel-llamada"></div></div>
+    </div>
+  </section>
+
+  <label class="toggle">
+    <input type="checkbox" id="ver-original" checked>
+    Mostrar lo que entendió antes de corregir
+  </label>
+
+  <main id="transcripcion"></main>
+
+  <footer>
+    <a id="descargar" href="#" download="transcripcion.jsonl">Descargar transcripción (JSONL)</a>
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
