@@ -1,0 +1,5 @@
+# Same line endings (LF) for everyone, whether they use Windows, Mac or Linux
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

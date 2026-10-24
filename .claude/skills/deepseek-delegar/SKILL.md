@@ -1,12 +1,14 @@
 ---
 name: deepseek-delegar
-description: The user's standing division of labor for coding. DeepSeek Flash (cheap and fast) writes the simple pieces, and Claude reviews and corrects its output and writes the complex pieces itself. Use it on every coding task (especially hackathons): split the work, delegate boilerplate, single functions, small components, CRUD endpoints, data conversions, unit tests, CSS/HTML, config files and simple scripts; keep architecture, core logic, debugging, integration and security-sensitive code.
+description: Optional team workflow for coding, only when ~/.deepseek-key exists on this machine. DeepSeek Flash (cheap and fast) writes the simple pieces, and Claude reviews and corrects its output and writes the complex pieces itself. Use it on coding tasks in this repo: split the work, delegate boilerplate, single functions, small components, CRUD endpoints, data conversions, unit tests, CSS/HTML, config files and simple scripts; keep architecture, core logic, debugging, integration and security-sensitive code.
 ---
 
 # Delegar a DeepSeek
 
-DeepSeek Flash acts as a junior programmer. You (Claude) are the senior lead. This is the user's
-standing division of labor, so apply it on every coding task without being asked:
+DeepSeek Flash acts as a junior programmer. You (Claude) are the senior lead. First check that
+`~/.deepseek-key` exists (or `DEEPSEEK_API_KEY` is set); if not, skip this skill and code normally.
+Your user can turn it on by saving their own DeepSeek or OpenRouter key there; never commit a key.
+When the key exists, apply this division of labor on coding tasks:
 - **Flash writes the simple code.**
 - **You correct Flash's output and write the complex code yourself.**
 
