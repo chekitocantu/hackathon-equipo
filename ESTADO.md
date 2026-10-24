@@ -4,10 +4,10 @@
 
 ## Idea
 Reto: **"Del primer contacto a la propuesta"** — ver [RETO.md](RETO.md) (problema, indicadores, rúbrica y agenda).
-La solución está por definir (issue #1, ahí hay una propuesta para discutir).
+Idea del equipo: **el "Traductor"** (detalle y ajustes por discutir en el issue #1).
 
-- **Problema:**
-- **Solución:**
+- **Problema:** la información existe, pero no llega a ventas durante la reunión ni pasa bien a Finanzas e Ingenieros. Por eso hay levantamientos incompletos, el cliente repite todo y las propuestas tardan.
+- **Solución:** un agente en vivo con ventas de Alestra que toma notas y avisa en pantalla lo que se omitió o conviene mencionar. Al terminar, manda a Finanzas y a Ingenieros lo que tiene que hacer cada uno, en su propio lenguaje.
 - **MVP (lo mínimo para la demo):**
 - **Fuera de alcance:**
 
@@ -15,7 +15,7 @@ La solución está por definir (issue #1, ahí hay una propuesta para discutir).
 Por definir.
 
 ## Estado actual
-Ya tenemos el reto (RETO.md). Falta definir la solución (#1) y el stack (#2). Próximo checkpoint: 12:30, problema bien definido.
+Ya tenemos el reto (RETO.md) y la idea base (el Traductor). Falta acordar los ajustes y el MVP (#1) y el stack (#2). Próximo checkpoint: 12:30, problema bien definido.
 
 ## Cómo correrlo
 Por definir cuando exista el esqueleto del proyecto.
