@@ -4,11 +4,14 @@
 //   GET  /api/llamada/segmentos  → estado del bot y frases transcritas hasta ahora
 //   POST /api/llamada/terminar   → saca al bot de la reunión
 //   POST /api/transcribir        → respaldo sin bot: audio webm del navegador → texto (Whisper vía OpenRouter)
-//   POST /api/analizar           → transcripción → productos, datos, reglas y siguiente pregunta (Claude vía OpenRouter)
+//   POST /api/analizar           → transcripción → productos, datos, reglas y siguiente pregunta (Claude vía OpenRouter);
+//                                  si InsForge está configurado, guarda la llamada y devuelve lo que ya se sabía del cliente
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { codigoDeMeet, enviarBot, estadoBot, leerSegmentos, sacarBot, type ConfigVexa } from './vexa.ts';
+import { crearMemoria, type ConfigInsforge, type Memoria, type Recuerdo } from './memoria.ts';
+import { evaluar, preguntaDelAgente, preguntasDelCliente, type Ayuda, type PreguntaLlamada } from './ayuda.ts';
 
 const OPENROUTER = 'https://openrouter.ai/api/v1';
 
@@ -17,6 +20,8 @@ export interface ConfigApi {
   modeloTranscripcion: string;
   modeloAgente: string;
   vexa: ConfigVexa;
+  /** Sin URL ni key, la llamada funciona igual pero no se guarda ni se recuerda nada. */
+  insforge: ConfigInsforge;
   /** Carpeta del proyecto `landing`; el catálogo está a un lado. */
   raiz: string;
 }
@@ -49,6 +54,8 @@ const ALUCINACIONES = [/subt[ií]tulos/i, /amara\.org/i, /gracias por ver/i, /su
 export function crearApi(config: ConfigApi) {
   const catalogo = JSON.parse(readFileSync(resolve(config.raiz, '../catalogo-simulado/catalogo-simulado.json'), 'utf8')) as Catalogo;
   const sistema = promptDelAgente(catalogo);
+  const nombres = new Map(catalogo.productos.map((p) => [p.sku, p.nombre]));
+  const memoria = crearMemoria(config.insforge, (sku) => nombres.get(sku) ?? sku);
 
   return async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     if (!req.url?.startsWith('/api/')) return next();
@@ -90,10 +97,15 @@ export function crearApi(config: ConfigApi) {
         return responder(res, 200, { texto: await transcribir(config, audio) });
       }
       if (req.method === 'POST' && req.url.startsWith('/api/analizar')) {
-        const { transcripcion } = JSON.parse((await leerCuerpo(req)).toString('utf8')) as {
+        const { transcripcion, llamada } = JSON.parse((await leerCuerpo(req)).toString('utf8')) as {
           transcripcion: { quien: string; texto: string }[];
+          llamada?: { id: string; origen: string; codigo?: string };
         };
-        return responder(res, 200, await analizar(config, sistema, catalogo, transcripcion));
+        if (!memoria || !llamada?.id) {
+          const resultado = await analizar(config, sistema, catalogo, transcripcion, []);
+          return responder(res, 200, { ...resultado, memoria: null, ayuda: ayudaDe(catalogo, preguntasDelTurno(transcripcion, resultado), resultado) });
+        }
+        return responder(res, 200, await analizarConMemoria(config, sistema, catalogo, memoria, llamada, transcripcion));
       }
       responder(res, 404, { error: 'Ruta no encontrada' });
     } catch (e) {
@@ -114,11 +126,66 @@ async function transcribir(config: ConfigApi, audio: Buffer) {
   return texto.length < 80 && ALUCINACIONES.some((re) => re.test(texto)) ? '' : texto;
 }
 
-async function analizar(config: ConfigApi, sistema: string, catalogo: Catalogo, transcripcion: { quien: string; texto: string }[]) {
+/**
+ * El análisis normal, más la memoria: antes de llamar al modelo se le pasa lo que el cliente ya contó en otras llamadas;
+ * después se guarda lo nuevo y se buscan clientes parecidos. Si InsForge falla, la llamada sigue sin memoria.
+ */
+async function analizarConMemoria(
+  config: ConfigApi,
+  sistema: string,
+  catalogo: Catalogo,
+  memoria: Memoria,
+  llamada: { id: string; origen: string; codigo?: string },
+  transcripcion: { quien: string; texto: string }[],
+) {
+  const previo = await memoria.previo(llamada.id).catch(() => []);
+  const resultado = await analizar(config, sistema, catalogo, transcripcion, previo);
+  const delTurno = preguntasDelTurno(transcripcion, resultado);
+  let recuerdo: Recuerdo | null = null;
+  let ayuda = ayudaDe(catalogo, delTurno, resultado);
+  try {
+    const clienteId = await memoria.guardar(llamada, transcripcion, resultado);
+    // El conteo técnico usa todas las preguntas guardadas de la llamada, no solo las de este turno.
+    ayuda = ayudaDe(catalogo, await memoria.preguntas(llamada.id, delTurno), resultado);
+    await memoria.guardarAyuda(llamada.id, ayuda);
+    recuerdo = await memoria.recordar(llamada.id, clienteId, resultado.industria, resultado.productos.map((p) => p.sku));
+  } catch (e) {
+    console.warn('[memoria] InsForge no respondió:', e instanceof Error ? e.message : e);
+  }
+  return { ...resultado, memoria: recuerdo, ayuda };
+}
+
+/** Las preguntas que hizo el cliente en la transcripción y la que el agente le sugiere ahora al vendedor. */
+function preguntasDelTurno(transcripcion: { quien: string; texto: string }[], resultado: { pregunta: { texto: string | null } | null }) {
+  return [...preguntasDelCliente(transcripcion), ...preguntaDelAgente(resultado.pregunta?.texto)];
+}
+
+function ayudaDe(catalogo: Catalogo, preguntas: PreguntaLlamada[], resultado: { productos: { sku: string; estado: string }[]; reglas: string[] }): Ayuda {
+  const textos = new Map(catalogo.reglas_escalamiento.map((r) => [r.id, r.cuando_entra_un_arquitecto]));
+  return evaluar(
+    preguntas,
+    resultado.productos,
+    resultado.reglas.map((id) => ({ id, texto: textos.get(id) ?? id })),
+    new Map(catalogo.productos.map((p) => [p.sku, p])),
+  );
+}
+
+async function analizar(
+  config: ConfigApi,
+  sistema: string,
+  catalogo: Catalogo,
+  transcripcion: { quien: string; texto: string }[],
+  previo: Recuerdo['yaSabemos'],
+) {
   const conversacion = transcripcion
     .slice(-150)
     .map((t) => `${t.quien}: ${t.texto}`)
     .join('\n');
+  const antes = previo.length
+    ? `Esto ya lo dijo el cliente en llamadas anteriores (no lo vuelvas a preguntar; úsalo si sigue aplicando):\n${previo
+        .map((d) => `- ${d.etiqueta}: ${d.valor} (${d.fecha})`)
+        .join('\n')}\n\n`
+    : '';
   const respuesta = await llamar(config, '/chat/completions', {
     model: config.modeloAgente,
     temperature: 0.2,
@@ -126,7 +193,7 @@ async function analizar(config: ConfigApi, sistema: string, catalogo: Catalogo, 
     messages: [
       // El catálogo es igual en cada llamada; se marca para caché y así cada turno responde más rápido.
       { role: 'system', content: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }] },
-      { role: 'user', content: `Transcripción de la videollamada hasta ahora:\n\n${conversacion}\n\nDevuelve solo el JSON.` },
+      { role: 'user', content: `${antes}Transcripción de la videollamada hasta ahora:\n\n${conversacion}\n\nDevuelve solo el JSON.` },
     ],
   });
   const texto = String(respuesta.choices?.[0]?.message?.content ?? '');
@@ -164,6 +231,7 @@ function validar(crudo: Record<string, unknown>, catalogo: Catalogo) {
   const pregunta = crudo.pregunta as Record<string, unknown> | null;
   return {
     empresa: texto(crudo.empresa, 60),
+    industria: texto(crudo.industria, 40),
     productos: productosValidos,
     reglas: (Array.isArray(crudo.reglas) ? (crudo.reglas as unknown[]) : [])
       .map(String)
@@ -224,6 +292,7 @@ QUÉ DEVOLVER
 Solo un objeto JSON, sin texto antes ni después, con esta forma:
 {
   "empresa": "nombre de la empresa del cliente si lo dijeron, si no null",
+  "industria": "giro del cliente en una o dos palabras (ej. Salud, Fintech, Manufactura) si se sabe, si no null",
   "productos": [{ "sku": "SIM-...", "estado": "incluido | pendiente | arquitecto | sugerido", "cantidad": 25, "nota": "texto corto" }],
   "reglas": ["ESC-04"],
   "datos": [{ "dato": "Usuarios", "valor": "25 personas" }],

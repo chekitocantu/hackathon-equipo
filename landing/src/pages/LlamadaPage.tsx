@@ -19,6 +19,7 @@ import {
   useAnchoVentana,
   VERDE,
 } from '../components/tema';
+import type { Ayuda } from '../lib/ayuda';
 import { conversacionDeGuion, GUIONES, type Pregunta } from '../lib/casos';
 import type { ProductoEnEtapa } from '../lib/cotizador';
 import { Segmentador, type Segmento } from '../lib/grabador';
@@ -49,6 +50,15 @@ interface Analisis {
   datos: DatoTablero[];
   reglas: string[];
   pregunta: Pregunta | null;
+  /** De InsForge: lo que el cliente ya dijo en otras llamadas y clientes parecidos. null si no hay memoria configurada. */
+  memoria: Memoria | null;
+  /** Algoritmo de ayuda de IT (server/ayuda.ts): si entra un ingeniero y para qué. */
+  ayuda: Ayuda | null;
+}
+
+interface Memoria {
+  yaSabemos: { etiqueta: string; valor: string; fecha: string }[];
+  similares: { empresa: string; industria: string | null; comun: string; productos: string[]; it: string | null }[];
 }
 
 interface SegmentoNotetaker {
@@ -58,7 +68,7 @@ interface SegmentoNotetaker {
   inicio: number;
 }
 
-const SIN_ANALISIS: Analisis = { empresa: null, productos: [], datos: [], reglas: [], pregunta: null };
+const SIN_ANALISIS: Analisis = { empresa: null, productos: [], datos: [], reglas: [], pregunta: null, memoria: null, ayuda: null };
 const CADA_CUANTO_LEER_MS = 1500;
 const ESPERA_ADMISION_MS = 120_000;
 
@@ -106,10 +116,14 @@ export default function LlamadaPage() {
   const [ahora, setAhora] = useState(Date.now());
   const [indiceDemo, setIndiceDemo] = useState(0);
   const [verTranscripcion, setVerTranscripcion] = useState(false);
+  // Cada pregunta que el agente sugirió en la llamada: cuentan para el algoritmo de ayuda de IT.
+  const [sugeridas, setSugeridas] = useState<string[]>([]);
 
   const recursos = useRef<{ segmentadores: Segmentador[]; pistas: MediaStreamTrack[] }>({ segmentadores: [], pistas: [] });
   const niveles = useRef<Record<Quien, number>>({ Cliente: 0, Vendedor: 0 });
   const conversacion = useRef<Intervencion[]>([]);
+  // Id con el que esta llamada se guarda en InsForge; cambia con cada llamada nueva.
+  const llamadaId = useRef('');
   const firma = useRef('');
   const cola = useRef({ corriendo: false, otraVez: false });
   const activa = useRef<{ fuente: Fuente | null; fase: Fase }>({ fuente: null, fase: 'preparar' });
@@ -226,9 +240,14 @@ export default function LlamadaPage() {
     try {
       const resultado = await pedir<Analisis>(
         '/api/analizar',
-        enviarJson({ transcripcion: conversacion.current.map(({ quien, texto }) => ({ quien, texto })) }),
+        enviarJson({
+          transcripcion: conversacion.current.map(({ quien, texto }) => ({ quien, texto })),
+          llamada: datosDeLlamada(),
+        }),
       );
       setAnalisis(resultado);
+      const nueva = resultado.pregunta?.texto;
+      if (nueva) setSugeridas((s) => (s.includes(nueva) ? s : [...s, nueva]));
       setAviso(null);
     } catch (e) {
       setAviso(`Agente: ${e instanceof Error ? e.message : e}`);
@@ -242,11 +261,22 @@ export default function LlamadaPage() {
     }
   }
 
+  function datosDeLlamada() {
+    const f = activa.current.fuente;
+    return {
+      id: llamadaId.current,
+      origen: f?.tipo === 'bot' ? 'meet' : (f?.tipo ?? 'demo'),
+      codigo: f?.tipo === 'bot' ? f.codigo : undefined,
+    };
+  }
+
   function reiniciar(nueva: Fuente) {
+    llamadaId.current = crypto.randomUUID();
     conversacion.current = [];
     firma.current = '';
     setIntervenciones([]);
     setAnalisis(SIN_ANALISIS);
+    setSugeridas([]);
     setAviso(null);
     setError(null);
     setEstadoBot(null);
@@ -451,6 +481,8 @@ export default function LlamadaPage() {
         </div>
       </header>
 
+      {!verTranscripcion && analisis.memoria && <PanelMemoria memoria={analisis.memoria} apilado={apilado} />}
+
       {verTranscripcion ? (
         <Transcripcion intervenciones={intervenciones} />
       ) : (
@@ -465,6 +497,9 @@ export default function LlamadaPage() {
           datos={analisis.datos}
           reglas={analisis.reglas}
           pregunta={analisis.pregunta}
+          conversacion={intervenciones.map(({ quien, texto }) => ({ quien, texto }))}
+          preguntasSugeridas={sugeridas}
+          ayuda={analisis.ayuda}
           esperando={
             intervenciones.length === 0
               ? 'La primera pregunta aparece cuando el cliente cuente su problema.'
@@ -705,6 +740,49 @@ function Transcripcion({ intervenciones }: { intervenciones: Intervencion[] }) {
           <span style={{ fontSize: '0.95rem', lineHeight: 1.45 }}>{i.texto}</span>
         </div>
       ))}
+    </section>
+  );
+}
+
+/** Lo que viene de InsForge: datos que el cliente ya dio en otra llamada y clientes parecidos. */
+function PanelMemoria({ memoria, apilado }: { memoria: Memoria; apilado: boolean }) {
+  if (!memoria.yaSabemos.length && !memoria.similares.length) return null;
+  const rotulo: CSSProperties = { margin: '0 0 6px', fontSize: '0.78rem', fontWeight: 700, color: TERCIARIO, letterSpacing: '0.02em' };
+  return (
+    <section
+      style={{
+        ...tarjeta,
+        padding: '14px 20px',
+        display: 'grid',
+        gridTemplateColumns: apilado || !memoria.yaSabemos.length || !memoria.similares.length ? '1fr' : '1fr 1fr',
+        gap: '18px',
+      }}
+    >
+      {memoria.yaSabemos.length > 0 && (
+        <div style={{ minWidth: 0 }}>
+          <p style={rotulo}>YA LO SABEMOS DE OTRA LLAMADA</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {memoria.yaSabemos.slice(0, 6).map((d) => (
+              <Chip key={d.etiqueta} destacado>
+                {d.etiqueta}: {d.valor} · {d.fecha}
+              </Chip>
+            ))}
+          </div>
+        </div>
+      )}
+      {memoria.similares.length > 0 && (
+        <div style={{ minWidth: 0 }}>
+          <p style={rotulo}>CLIENTES PARECIDOS</p>
+          {memoria.similares.map((s) => (
+            <p key={s.empresa} style={{ margin: '0 0 4px', fontSize: '0.88rem', color: TEXTO }}>
+              <strong>{s.empresa}</strong>
+              {s.industria ? ` (${s.industria})` : ''} · <span style={{ color: SECUNDARIO }}>{s.comun}</span>
+              {s.productos.length > 0 && <span style={{ color: TERCIARIO }}> · se le ofreció {s.productos.join(', ')}</span>}
+              {s.it && <span style={{ color: TERCIARIO }}> · {s.it}</span>}
+            </p>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

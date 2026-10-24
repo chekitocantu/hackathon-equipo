@@ -1,8 +1,5 @@
 import { Link } from 'react-router-dom';
 import USAMapBackground from '../USAmap';
-import PixelCanvasBackground from '../PixelCanvasBackground';
-import mapaUrl from '../mapa.jpg';
-import bloudUrl from '../bloud.svg';
 
 export default function LandingPage() {
   return (
@@ -22,75 +19,43 @@ export default function LandingPage() {
         overflowX: 'hidden',
       }}
     >
-      {/* Contenedor central con Margin-Left y Margin-Right precisos y bordes de grid */}
+      {/* Contenedor a todo lo ancho: el hero llega de orilla a orilla */}
       <div
         style={{
-          width: 'calc(100% - clamp(24px, 6vw, 96px))',
-          maxWidth: '1240px',
-          marginLeft: 'auto',
-          marginRight: 'auto',
+          width: '100%',
           backgroundColor: '#ffffff',
-          borderLeft: '1px solid #e2e8f0',
-          borderRight: '1px solid #e2e8f0',
-          boxShadow: '0 0 45px rgba(0, 0, 0, 0.035)',
           display: 'flex',
           flexDirection: 'column',
           boxSizing: 'border-box',
           minHeight: '100vh',
         }}
       >
-        {/* ── Hero Section (con USA Map Canvas de fondo y Grid Style) ── */}
+        {/* ── Hero en dos columnas: texto a la izquierda, video a la derecha sin nada encima ── */}
         <section
           style={{
-            position: 'relative',
             width: '100%',
-          height: 'clamp(460px, 60vh, 580px)',
-          minHeight: '460px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          paddingTop: 'clamp(36px, 6vh, 60px)',
-          paddingLeft: '20px',
-          paddingRight: '20px',
-          textAlign: 'center',
-          overflow: 'hidden',
-          boxSizing: 'border-box',
-          backgroundColor: '#090d16',
-          backgroundImage:
-            'linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-          borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-        }}
-      >
-        {/* Fondo interactivo USA Map con Grid Style */}
-        <USAMapBackground
-          src={mapaUrl}
-          pixelSize={6}
-          shapeMode="random"
-          showGrid={true}
-          colorMode="greyscale"
-          overlayOpacity={0}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            zIndex: 0,
+            minHeight: 'clamp(460px, 70vh, 640px)',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
+            alignItems: 'stretch',
+            boxSizing: 'border-box',
+            backgroundColor: '#090d16',
+            backgroundImage:
+              'linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+            borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
           }}
-        />
-
-        {/* Contenido del Hero sobre el mapa */}
+        >
+        {/* Columna de texto */}
         <div
           style={{
-            position: 'relative',
-            zIndex: 1,
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            maxWidth: '900px',
-            width: '100%',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            textAlign: 'left',
+            padding: 'clamp(36px, 6vw, 80px) clamp(20px, 5vw, 72px)',
+            boxSizing: 'border-box',
           }}
         >
           {/* ── Main Highlighted Title ── */}
@@ -100,7 +65,7 @@ export default function LandingPage() {
               padding: 0,
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               gap: '6px',
             }}
           >
@@ -125,15 +90,14 @@ export default function LandingPage() {
           {/* ── Subtitle ── */}
           <p
             style={{
-              color: 'black',
-              fontSize: 'clamp(1rem, 2vw, 1.25rem)',
-              fontWeight: 600,
-              maxWidth: '560px',
-              marginTop: '26px',
-              marginBottom: '26px',
-              lineHeight: 1.4,
+              color: '#e2e8f0',
+              fontSize: 'clamp(1.05rem, 1.6vw, 1.3rem)',
+              fontWeight: 500,
+              maxWidth: '520px',
+              marginTop: '24px',
+              marginBottom: '30px',
+              lineHeight: 1.5,
               letterSpacing: '-0.01em',
-               backgroundColor: 'white'
             }}
           >
             Pregunta lo correcto desde la primera reunión y entrega la propuesta antes de colgar.
@@ -144,7 +108,7 @@ export default function LandingPage() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'flex-start',
               gap: '12px',
               flexWrap: 'wrap',
             }}
@@ -155,8 +119,8 @@ export default function LandingPage() {
                 backgroundColor: '#ffffff',
                 color: '#000000',
                 borderRadius: '9999px',
-                padding: '10px 22px',
-                fontSize: '0.95rem',
+                padding: '15px 34px',
+                fontSize: '1.2rem',
                 fontWeight: 700,
                 textDecoration: 'none',
                 display: 'inline-flex',
@@ -183,8 +147,8 @@ export default function LandingPage() {
                 backgroundColor: '#00b8ff',
                 color: '#ffffff',
                 borderRadius: '9999px',
-                padding: '10px 22px',
-                fontSize: '0.95rem',
+                padding: '15px 34px',
+                fontSize: '1.2rem',
                 fontWeight: 700,
                 textDecoration: 'none',
                 display: 'inline-flex',
@@ -205,6 +169,25 @@ export default function LandingPage() {
               Enlaza tu llamada ›
             </Link>
           </div>
+        </div>
+
+        {/* Columna del video: ocupa todo su espacio y no lleva nada encima */}
+        <div style={{ position: 'relative', minHeight: '320px', overflow: 'hidden' }}>
+          <USAMapBackground
+            src="/hero-vendedor.mp4"
+            pixelSize={6}
+            shapeMode="random"
+            showGrid={true}
+            colorMode="greyscale"
+            overlayOpacity={0}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+            }}
+          />
         </div>
       </section>
 
@@ -262,11 +245,6 @@ export default function LandingPage() {
               overflow: 'hidden',
               minHeight: '360px',
               backgroundColor: '#ffffff',
-              backgroundImage:
-                'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)',
-              backgroundSize: '24px 24px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -275,18 +253,26 @@ export default function LandingPage() {
             }}
           >
 
-            {/* Fondo de Canvas Animado con bloud.svg - OJO: SIN overlay ni fondo negro */}
-            <PixelCanvasBackground
-              src={bloudUrl}
-              pixelSize={6}
-              colorMode="full"
-              overlayOpacity={0}
+            {/* Video del agente: ya viene en pixeles, se muestra tal cual. Arranca y se repite desde el segundo 1. */}
+            <video
+              src="/pixel-video-1792872278854.webm"
+              autoPlay
+              muted
+              playsInline
+              onLoadedMetadata={(e) => {
+                e.currentTarget.currentTime = 1;
+              }}
+              onEnded={(e) => {
+                e.currentTarget.currentTime = 1;
+                void e.currentTarget.play();
+              }}
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
                 height: '100%',
+                objectFit: 'cover',
                 zIndex: 1,
               }}
             />

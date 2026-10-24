@@ -115,6 +115,8 @@ export default function SimuladorPage() {
         datos={informacionQueFalta(caso).map((etiqueta, i) => ({ etiqueta, valor: etapa.datos[i] }))}
         reglas={etapa.reglas}
         pregunta={etapa.pregunta}
+        conversacion={guion.etapas.slice(0, indice + 1).map((e) => ({ quien: 'Cliente', texto: e.cliente }))}
+        preguntasSugeridas={guion.etapas.slice(0, indice).flatMap((e) => (e.pregunta ? [e.pregunta.texto] : []))}
         alHacerPregunta={() => irA(indice + 1)}
       />
     </div>

@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv, searchForWorkspaceRoot, type Plugin } from 'vite'
 import { crearApi } from './server/api.ts'
+import { configInsforge } from './server/memoria.ts'
 
 // Monta /api/* en el mismo servidor de Vite; la llave se lee de .env.local y no llega al navegador.
 function apiLocal(env: Record<string, string>): Plugin {
@@ -10,6 +11,7 @@ function apiLocal(env: Record<string, string>): Plugin {
     modeloTranscripcion: env.OPENROUTER_MODELO_TRANSCRIPCION || 'openai/gpt-4o-mini-transcribe',
     modeloAgente: env.OPENROUTER_MODELO_AGENTE || 'anthropic/claude-sonnet-5.5',
     vexa: { apiKey: env.VEXA_API_KEY, url: env.VEXA_API_URL || 'https://api.cloud.vexa.ai' },
+    insforge: configInsforge(env, raiz),
     raiz,
   })
   return {
