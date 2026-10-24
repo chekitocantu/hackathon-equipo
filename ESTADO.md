@@ -48,3 +48,7 @@ El esqueleto del proyecto completo sigue por definir (#2). Lo que ya corre:
 - 2026-10-24 — @chekitocantu: la transcripción en vivo se prueba con la API en la nube de Vexa (no instalada local: pide Docker y GPU).
   Para la demo hay una transcripción simulada de respaldo. Meetily se descartó como fuente porque su versión gratis
   no tiene API ni separa quién habla. Detalle en `notas/notetaker.md`.
+- 2026-10-24 — @brioness47: la memoria de clientes vive en InsForge (proyecto "base data"): cada llamada guarda frases,
+  datos y productos detectados, y el tablero muestra en vivo lo que el cliente ya dijo antes y clientes parecidos.
+  Solo el servidor (`landing/server/memoria.ts`) habla con InsForge con la API key de admin; las tablas tienen RLS sin
+  políticas para que la anon key no lea conversaciones. Esquema en `migrations/`.
