@@ -189,7 +189,9 @@ async function analizar(
   const respuesta = await llamar(config, '/chat/completions', {
     model: config.modeloAgente,
     temperature: 0.2,
-    max_tokens: 1500,
+    // Sin razonamiento interno: Haiku se gastaba los tokens "pensando" y el JSON llegaba cortado (finish_reason=length).
+    reasoning: { enabled: false },
+    max_tokens: 2500,
     messages: [
       // El catálogo es igual en cada llamada; se marca para caché y así cada turno responde más rápido.
       { role: 'system', content: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }] },
@@ -198,7 +200,13 @@ async function analizar(
   });
   const texto = String(respuesta.choices?.[0]?.message?.content ?? '');
   const json = texto.slice(texto.indexOf('{'), texto.lastIndexOf('}') + 1);
-  return validar(JSON.parse(json), catalogo);
+  try {
+    return validar(JSON.parse(json), catalogo);
+  } catch (e) {
+    const fin = (respuesta.choices?.[0] as { finish_reason?: string } | undefined)?.finish_reason;
+    console.warn(`[agente] JSON inválido (finish_reason=${fin}, ${texto.length} caracteres): ${texto.slice(0, 160)}`);
+    throw e;
+  }
 }
 
 /** Lo que diga el modelo pasa por aquí: solo sobreviven productos y reglas que existen en el catálogo. */

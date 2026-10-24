@@ -138,8 +138,9 @@ export default function Tablero({
           </p>
         </div>
 
-        {/* Mapa de soluciones: toma todo el alto que sobra */}
-        <section style={{ ...tarjeta, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', paddingBottom: '14px' }}>
+        {/* Mapa de soluciones: toma todo el alto que sobra. El mínimo es de la tarjeta (no del dibujo) para que el
+            dibujo nunca se salga y se encime en las tarjetas de abajo; en pantallas bajas la página hace scroll. */}
+        <section style={{ ...tarjeta, flex: 1, minHeight: apilado ? 0 : '230px', overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingBottom: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', flexWrap: 'wrap', marginBottom: '8px' }}>
             <h2 style={tituloTarjeta}>Mapa de soluciones</h2>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.8rem', color: SECUNDARIO }}>
@@ -149,7 +150,7 @@ export default function Tablero({
               <Leyenda color="#c7c7cc" texto="Sugerido" />
             </div>
           </div>
-          <div style={{ position: 'relative', ...(apilado ? { aspectRatio: '1080 / 250' } : { flex: 1, minHeight: '150px' }) }}>
+          <div style={{ position: 'relative', ...(apilado ? { aspectRatio: '1080 / 250' } : { flex: 1, minHeight: 0 }) }}>
             <MapaSoluciones productos={productos} />
           </div>
           {familiasSinSenal.length > 0 && (
