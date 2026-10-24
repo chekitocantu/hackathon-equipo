@@ -15,7 +15,20 @@ Idea del equipo: **el "Traductor"** (detalle y ajustes por discutir en el issue 
 Por definir.
 
 ## Estado actual
-Ya tenemos el reto (RETO.md) y la idea base (el Traductor). Falta acordar los ajustes y el MVP (#1) y el stack (#2). Próximo checkpoint: 12:30, problema bien definido.
+Ya tenemos el reto (RETO.md), la idea base (el Traductor), una landing, un dashboard inicial y un catálogo simulado
+(`catalogo-simulado/`). Falta acordar el MVP (#1) y el stack (#2). Próximo checkpoint: 17:00, prototipo funcional.
+
+**Quién hace qué** (detalle en [EQUIPO.md](EQUIPO.md)):
+
+| Quién | Qué |
+|---|---|
+| Karim | Dashboard para ventas |
+| Marco | Dolores de clientes: reseñas negativas de apps que hacen cosas como las de Alestra (sirve para el pitch y para saber qué avisar) |
+| Sergio | Notetaker con transcripción en vivo → [notas/notetaker.md](notas/notetaker.md) |
+| Rubén | Cerebro del Traductor: avisa en vivo lo que se le pasa a ventas y al final manda a cada área (IT, Finanzas) su reporte con sus términos y acrónimos |
+
+Lo que une al notetaker con el cerebro es el formato de los segmentos de la transcripción: propuesta en
+[notas/notetaker.md](notas/notetaker.md#formato-que-le-llega-al-cerebro-propuesta-para-brioness47).
 
 ## Cómo correrlo
 Por definir cuando exista el esqueleto del proyecto.
@@ -27,3 +40,7 @@ Por definir cuando exista el esqueleto del proyecto.
 
 ## Decisiones
 - 2026-10-24 — @chekitocantu: las tareas viven en GitHub Issues y no en archivos, para que varios agentes las reclamen sin conflictos de merge.
+- 2026-10-24 — @chekitocantu: reparto del trabajo: Karim dashboard, Marco dolores de clientes, Sergio notetaker, Rubén cerebro del Traductor.
+- 2026-10-24 — @chekitocantu: la transcripción en vivo se prueba con la API en la nube de Vexa (no instalada local: pide Docker y GPU).
+  Para la demo hay una transcripción simulada de respaldo. Meetily se descartó como fuente porque su versión gratis
+  no tiene API ni separa quién habla. Detalle en `notas/notetaker.md`.
