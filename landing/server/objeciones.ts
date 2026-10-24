@@ -16,6 +16,8 @@ export interface Objecion {
   di_mejor: string;
   no_decir: string[];
   revisar_legal: boolean;
+  /** Llevar el tema a un arquitecto (regulación, migración, seguridad, preguntas técnicas o fuera de catálogo). */
+  escalar: boolean;
 }
 
 export function bancoLocal(raiz: string): Objecion[] {

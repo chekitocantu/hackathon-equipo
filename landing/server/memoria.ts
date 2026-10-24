@@ -209,7 +209,7 @@ export function crearMemoria(config: ConfigInsforge, nombreDeSku: (sku: string) 
   async function objeciones(): Promise<Objecion[]> {
     const { data, error } = await db
       .from('objeciones')
-      .select('id, categoria, objecion, variantes, detras, preguntas, di_mejor, no_decir, revisar_legal')
+      .select('id, categoria, objecion, variantes, detras, preguntas, di_mejor, no_decir, revisar_legal, escalar')
       .eq('activa', true)
       .order('id', { ascending: true });
     if (error) throw new Error(error.message);

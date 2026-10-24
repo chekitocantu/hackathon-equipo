@@ -1,5 +1,5 @@
 {
-  "aviso": "Banco de objeciones para el Traductor. Las variantes, preguntas, «Di mejor» y «No digas» son adaptaciones propias basadas en las fuentes de cada objeción (reporte «Manejo de objeciones en ventas», 2026-10-24), no citas textuales. Las de regulación deben pasar por revisión legal.",
+  "aviso": "Banco de objeciones para el Traductor. Las variantes, preguntas, «Di mejor» y «No digas» son adaptaciones propias basadas en las fuentes de cada objeción (reporte «Manejo de objeciones en ventas», 2026-10-24), no citas textuales. Las de regulación deben pasar por revisión legal. «escalar» marca cuándo llevar el tema a un arquitecto (tabla «Cuándo escalar» del reporte); «inesperado» es el protocolo para respuestas fuera de catálogo.",
   "objeciones": [
     {
       "id": "OBJ-01",
@@ -23,6 +23,7 @@
         "No, no está caro"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -54,6 +55,7 @@
         "inventar urgencia"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -84,6 +86,7 @@
         "igualar el precio sin preguntar"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -114,6 +117,7 @@
         "Ese es el precio y ya"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -145,6 +149,7 @@
         "colgar sin preguntar cuándo vence el contrato"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
         "https://close.com/blog/sales-objections",
@@ -173,6 +178,7 @@
         "criticar la marca"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
         "https://close.com/blog/sales-objections",
@@ -202,6 +208,7 @@
         "Con nosotros ya no lo necesitaría"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
         "https://close.com/blog/sales-objections",
@@ -231,6 +238,7 @@
         "insinuar que el equipo no es capaz"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
         "https://close.com/blog/sales-objections",
@@ -260,6 +268,7 @@
         "aceptar más adelante sin fecha"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -285,6 +294,7 @@
         "Claro, yo le marco sin fecha ni motivo"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -310,6 +320,7 @@
         "Forzar una implementación durante el congelamiento"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -336,6 +347,7 @@
         "¿Lo va a leer?"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -364,6 +376,7 @@
         "seguir el pitch como si nada"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -393,6 +406,7 @@
         "seguir hablando"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -419,6 +433,7 @@
         "discutir"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -443,6 +458,7 @@
         "Evadir o inventar la fuente"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -472,6 +488,7 @@
         "saltarse al contacto sin acordarlo"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -498,6 +515,7 @@
         "Perder el interés de forma evidente"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -523,6 +541,7 @@
         "¿Qué hay que pensar? en tono de reproche"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -552,6 +571,7 @@
         "Se puede salir fácilmente"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -578,6 +598,7 @@
         "dar asesoría legal"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -603,6 +624,7 @@
         "Es estándar, todos firman a 36 meses"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://close.com/blog/sales-objections",
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
@@ -630,6 +652,7 @@
         "insistir con funcionalidades"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
         "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
@@ -657,6 +680,7 @@
         "inventar estadísticas de ataques"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
         "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
@@ -684,6 +708,7 @@
         "cifras sin verificar"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
         "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
@@ -712,6 +737,7 @@
         "contestar con tarifa en vez de con método"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
         "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
@@ -735,6 +761,7 @@
         "Contraatacar"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
         "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
@@ -759,6 +786,7 @@
         "Presionar"
       ],
       "revisar_legal": false,
+      "escalar": false,
       "fuentes": [
         "https://blog.hubspot.com/sales/handling-common-sales-objections",
         "https://challengerinc.com/blog/prospect-theory-drives-sales-experiences/",
@@ -787,6 +815,7 @@
         "Nos hacemos responsables de todo"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://www.deloitte.com/content/dam/Deloitte/us/Documents/risk/us-risk-aws-ransomware-resiliency-whitepaper.pdf",
         "https://static.fortra.com/alert-logic/pdfs/guide/fta-al-key-steps-in-defining-a-shared-responsibility-model-for-aws-gd.pdf",
@@ -815,6 +844,7 @@
         "Nadie del proveedor puede ver nada"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://www.deloitte.com/content/dam/Deloitte/us/Documents/risk/us-risk-aws-ransomware-resiliency-whitepaper.pdf",
         "https://static.fortra.com/alert-logic/pdfs/guide/fta-al-key-steps-in-defining-a-shared-responsibility-model-for-aws-gd.pdf",
@@ -842,6 +872,7 @@
         "Se recuperan en X minutos sin validación"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://www.deloitte.com/content/dam/Deloitte/us/Documents/risk/us-risk-aws-ransomware-resiliency-whitepaper.pdf",
         "https://static.fortra.com/alert-logic/pdfs/guide/fta-al-key-steps-in-defining-a-shared-responsibility-model-for-aws-gd.pdf",
@@ -871,6 +902,7 @@
         "Garantizamos que pasa la auditoría"
       ],
       "revisar_legal": true,
+      "escalar": true,
       "fuentes": [
         "https://www.ey.com/es_mx/technical/tax/boletines-fiscales/nueva-ley-federal-proteccion-datos-personal-posesion-particulares",
         "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
@@ -901,6 +933,7 @@
         "cualquier cifra de multas"
       ],
       "revisar_legal": true,
+      "escalar": true,
       "fuentes": [
         "https://www.ey.com/es_mx/technical/tax/boletines-fiscales/nueva-ley-federal-proteccion-datos-personal-posesion-particulares",
         "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
@@ -927,6 +960,7 @@
         "Esto cumple la NOM-024 sin una certificación documentada"
       ],
       "revisar_legal": true,
+      "escalar": true,
       "fuentes": [
         "https://www.ey.com/es_mx/technical/tax/boletines-fiscales/nueva-ley-federal-proteccion-datos-personal-posesion-particulares",
         "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
@@ -953,6 +987,7 @@
         "Con esto ya son PCI compliant"
       ],
       "revisar_legal": true,
+      "escalar": true,
       "fuentes": [
         "https://www.ey.com/es_mx/technical/tax/boletines-fiscales/nueva-ley-federal-proteccion-datos-personal-posesion-particulares",
         "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
@@ -981,6 +1016,7 @@
         "Con cinco años basta siempre"
       ],
       "revisar_legal": true,
+      "escalar": true,
       "fuentes": [
         "https://www.ey.com/es_mx/technical/tax/boletines-fiscales/nueva-ley-federal-proteccion-datos-personal-posesion-particulares",
         "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
@@ -1010,6 +1046,7 @@
         "Es un fin de semana y listo"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://anadea.info/blog/cloud-migration-services/",
         "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
@@ -1036,6 +1073,7 @@
         "Cualquier cifra de horas o minutos no validada"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://anadea.info/blog/cloud-migration-services/",
         "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
@@ -1064,6 +1102,7 @@
         "Eso se migra igual que todo"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://anadea.info/blog/cloud-migration-services/",
         "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
@@ -1091,6 +1130,7 @@
         "No se va a notar nada"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://anadea.info/blog/cloud-migration-services/",
         "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
@@ -1119,6 +1159,7 @@
         "Es plug and play"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://anadea.info/blog/cloud-migration-services/",
         "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
@@ -1145,6 +1186,7 @@
         "Se pueden ir cuando quieran sin costo, salvo que el contrato lo diga"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://anadea.info/blog/cloud-migration-services/",
         "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
@@ -1172,6 +1214,7 @@
         "Sus datos nunca salen de México"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://anadea.info/blog/cloud-migration-services/",
         "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
@@ -1199,6 +1242,7 @@
         "un porcentaje distinto al del contrato"
       ],
       "revisar_legal": false,
+      "escalar": true,
       "fuentes": [
         "https://anadea.info/blog/cloud-migration-services/",
         "https://www.qovery.com/blog/phased-hybrid-cloud-migration-plan-without-downtime",
@@ -1206,6 +1250,147 @@
         "https://www.gorelo.io/?p=12415",
         "https://www.buchanan.com/hubfs/downloads-resources/2026_msp-evaluation-checklist.pdf",
         "https://aws.amazon.com/blogs/aws/now-open-aws-mexico-central-region"
+      ]
+    },
+    {
+      "id": "OBJ-45",
+      "categoria": "inesperado",
+      "objecion": "¿También hacen desarrollo a la medida?",
+      "variantes": [
+        "¿También hacen desarrollo a la medida?",
+        "¿Ustedes también venden eso?",
+        "Necesitaríamos algo que no veo en su oferta"
+      ],
+      "detras": "Pide algo fuera del catálogo; puede ser requisito o solo deseable",
+      "preguntas": [
+        "¿Qué problema resolvería eso?",
+        "¿Es requisito para decidir o es deseable?"
+      ],
+      "di_mejor": "Eso no está en mi oferta estándar; confirmo si lo cubrimos con un socio y le respondo.",
+      "no_decir": [
+        "Sí, también lo hacemos (sin confirmarlo)",
+        "Inventar un precio o un plazo"
+      ],
+      "revisar_legal": false,
+      "escalar": true,
+      "fuentes": [
+        "https://sandler.com/blog/salespeople-dig-deeper-reversing/",
+        "https://grahammann.net/book-notes/never-split-the-difference-chris-voss",
+        "https://www.sqmgroup.com/resources/library/blog/11-things-an-agent-should-not-say-to-a-customer",
+        "https://www.shopify.com/blog/customer-service-tips-how-to-deal-with-angry-customers"
+      ]
+    },
+    {
+      "id": "OBJ-46",
+      "categoria": "inesperado",
+      "objecion": "Manejamos 40 mil IOPS",
+      "variantes": [
+        "Manejamos 40 mil IOPS",
+        "Necesitamos un RPO de 15 minutos",
+        "Tenemos 200 VMs con 2 TB cada una"
+      ],
+      "detras": "Da un número técnico que el vendedor no puede valorar",
+      "preguntas": [
+        "¿Ese número es de hoy o lo que esperan a futuro?",
+        "¿Cómo lo miden hoy y quién lo mide?"
+      ],
+      "di_mejor": "Lo anoto tal cual para que el especialista lo revise y le confirme por escrito.",
+      "no_decir": [
+        "Sí, eso está bien",
+        "Redondear o cambiar la cifra"
+      ],
+      "revisar_legal": false,
+      "escalar": true,
+      "fuentes": [
+        "https://sandler.com/blog/salespeople-dig-deeper-reversing/",
+        "https://grahammann.net/book-notes/never-split-the-difference-chris-voss",
+        "https://www.sqmgroup.com/resources/library/blog/11-things-an-agent-should-not-say-to-a-customer",
+        "https://www.shopify.com/blog/customer-service-tips-how-to-deal-with-angry-customers"
+      ]
+    },
+    {
+      "id": "OBJ-47",
+      "categoria": "inesperado",
+      "objecion": "¿Qué hipervisor usan?",
+      "variantes": [
+        "¿Qué hipervisor usan?",
+        "¿Soportan IPv6?",
+        "¿Cuál es la latencia a Querétaro?"
+      ],
+      "detras": "Pregunta técnica que el vendedor no sabe contestar",
+      "preguntas": [
+        "¿Para qué decisión necesita esa respuesta y para cuándo?",
+        "¿Le sirve que el especialista se lo responda por escrito esta semana?"
+      ],
+      "di_mejor": "Prefiero no inventarle; lo reviso con preventa y le respondo el jueves.",
+      "no_decir": [
+        "Inventar una cifra o un sí",
+        "Lo resolvemos muy pronto (sin fecha)"
+      ],
+      "revisar_legal": false,
+      "escalar": true,
+      "fuentes": [
+        "https://sandler.com/blog/salespeople-dig-deeper-reversing/",
+        "https://grahammann.net/book-notes/never-split-the-difference-chris-voss",
+        "https://www.sqmgroup.com/resources/library/blog/11-things-an-agent-should-not-say-to-a-customer",
+        "https://www.shopify.com/blog/customer-service-tips-how-to-deal-with-angry-customers"
+      ]
+    },
+    {
+      "id": "OBJ-48",
+      "categoria": "inesperado",
+      "objecion": "Ustedes los proveedores siempre prometen y no cumplen",
+      "variantes": [
+        "Ustedes los proveedores siempre prometen y no cumplen",
+        "Ya me cansé de que nos quedan mal",
+        "Otra vez la misma historia"
+      ],
+      "detras": "Enojo o frustración; no se puede vender a alguien molesto",
+      "preguntas": [
+        "¿Qué pasó exactamente, para no repetirlo?",
+        "¿Qué tendría que ver para volver a confiar?"
+      ],
+      "di_mejor": "Si le pasó eso, tiene razón en desconfiar. Cuénteme qué pasó para no repetirlo.",
+      "no_decir": [
+        "Nosotros no somos como ellos",
+        "Cálmese",
+        "No hay por qué frustrarse"
+      ],
+      "revisar_legal": false,
+      "escalar": false,
+      "fuentes": [
+        "https://sandler.com/blog/salespeople-dig-deeper-reversing/",
+        "https://grahammann.net/book-notes/never-split-the-difference-chris-voss",
+        "https://www.sqmgroup.com/resources/library/blog/11-things-an-agent-should-not-say-to-a-customer",
+        "https://www.shopify.com/blog/customer-service-tips-how-to-deal-with-angry-customers"
+      ]
+    },
+    {
+      "id": "OBJ-49",
+      "categoria": "inesperado",
+      "objecion": "Esto también lo tiene que ver nuestro CIO",
+      "variantes": [
+        "Esto también lo tiene que ver nuestro CIO",
+        "Lo va a revisar el director de finanzas",
+        "Se suma nuestra área de seguridad"
+      ],
+      "detras": "Aparece un nuevo tomador de decisión",
+      "preguntas": [
+        "¿Qué es lo que más le importa a esa persona?",
+        "¿Agendamos una reunión con ella y el especialista?"
+      ],
+      "di_mejor": "Propongo una reunión conjunta con el especialista para que no tenga que repetir todo.",
+      "no_decir": [
+        "Saltarse al contacto actual",
+        "¿Entonces con quién tengo que hablar?"
+      ],
+      "revisar_legal": false,
+      "escalar": false,
+      "fuentes": [
+        "https://sandler.com/blog/salespeople-dig-deeper-reversing/",
+        "https://grahammann.net/book-notes/never-split-the-difference-chris-voss",
+        "https://www.sqmgroup.com/resources/library/blog/11-things-an-agent-should-not-say-to-a-customer",
+        "https://www.shopify.com/blog/customer-service-tips-how-to-deal-with-angry-customers"
       ]
     }
   ]

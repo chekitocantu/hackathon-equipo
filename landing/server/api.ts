@@ -289,7 +289,7 @@ function conObjecion<T extends { objecionId: string | null; pregunta: { texto: s
     pregunta: texto
       ? { texto, motivo: `Objeción: «${o.objecion}». Di mejor: «${o.di_mejor}»`, fuente: `${FUENTE_OBJECIONES} · ${o.id}`, cuidado: o.no_decir[0] ?? null }
       : resto.pregunta,
-    objecion: { id: o.id, categoria: o.categoria, objecion: o.objecion, diMejor: o.di_mejor, noDecir: o.no_decir, revisarLegal: o.revisar_legal },
+    objecion: { id: o.id, categoria: o.categoria, objecion: o.objecion, diMejor: o.di_mejor, noDecir: o.no_decir, revisarLegal: o.revisar_legal, escalar: o.escalar },
   };
 }
 
