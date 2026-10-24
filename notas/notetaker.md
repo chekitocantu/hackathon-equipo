@@ -1,46 +1,38 @@
-# Notetaker: de dónde sale la transcripción en vivo
+# Notetaker: de dónde sale la transcripción
 
-**Responsable:** Sergio (@chekitocantu) · **Última actualización:** 2026-10-24
+**Responsable:** Sergio (@chekitocantu) · **Última actualización:** 2026-10-24 · Issue: #7
 
-El Traductor necesita el texto de la reunión **mientras pasa**, separado por quién habla (vendedor o cliente).
-Esta nota resume qué herramientas open source revisamos y cuál usamos.
+El Traductor necesita el texto de la reunión **mientras pasa** (para los avisos al vendedor) y, al final,
+**quién dijo qué** (para los reportes de cada área).
 
-## Opciones revisadas
+## Qué usamos: notetaker propio en el navegador
+Código en `prototipos/notetaker/` (rama `chekitocantu/prueba-vexa`, sube por PR). Se corre con
+`node prototipos/notetaker/server.mjs` y se abre http://localhost:5180 en Chrome, Edge o Brave.
 
-| | Vexa | Meetily (versión gratis) |
-|---|---|---|
-| Cómo escucha | Un bot entra a la llamada (Meet, Teams, Zoom) | App de escritorio que graba el micrófono y el audio de la compu; no entra ningún bot |
-| Reuniones en persona | No | Sí |
-| API para leer la transcripción en vivo | Sí (`GET /transcripts/...`) | No (solo en Meetily PRO, que es de paga) |
-| Separa quién habla | Sí | No (solo PRO, "coming soon") |
-| Costo | ~US$0.50 por hora de bot en su nube; gratis si se instala en servidores propios | Gratis |
-| Dónde se procesa el audio | Su nube, o servidores propios (Apache 2.0) | La compu del usuario (MIT) |
-| Liga | https://github.com/Vexa-ai/vexa | https://github.com/Zackriya-Solutions/meetily |
+Funciona en dos capas:
 
-**Por qué no lo instalamos local hoy:** Vexa local necesita Docker y un equipo con GPU para transcribir.
-Para el hackathon usamos su API en la nube.
+| Capa | Cómo | Tiempo | Para qué |
+|---|---|---|---|
+| **En vivo** | Graba el micrófono (y, opcional, el audio de la llamada aparte), corta en las pausas, transcribe con OpenRouter `openai/gpt-4o-mini-transcribe` en español y DeepSeek corrige siglas y números | texto en ~0.6 s, corregido en 1-5 s | Avisos al vendedor |
+| **Al terminar** | La grabación completa va a `elevenlabs/scribe-v2` (separa voces) y DeepSeek le pone nombre a cada voz con la lista de asistentes | ~2 s por minuto + ~10 s | Reportes con quién pidió qué |
 
-## Plan
-1. **Demo:** reproducir una conversación de ejemplo como si fuera en vivo (línea por línea, con pausas).
-   No depende del wifi ni de que alguien admita al bot, así que no falla frente a los jueces.
-2. **Si sale la prueba con Vexa:** mostrar una llamada real (en vivo o grabada antes) con el mismo cerebro detrás.
-3. **Pitch:** "en producción entra a sus llamadas de Teams y se puede alojar en los servidores de Alestra";
-   para visitas en persona, una app sin bot como Meetily graba desde la laptop del vendedor.
+- **Quién habla en vivo:** en llamadas, micrófono = vendedor y audio de la llamada = cliente. En persona, DeepSeek lo
+  deduce por lo que dicen y por la lista de asistentes que el vendedor escribe al empezar ("Laura – Finanzas").
+- **Costo aproximado:** US$0.10 por hora en vivo + US$0.20 por hora la separación de voces + DeepSeek.
+- **Por qué no Meetily ni Vexa:** Meetily solo transcribe en la laptop (Whisper turbo iba muy lento en nuestra tarjeta)
+  y su versión gratis no tiene API ni separa voces. Vexa necesita que un bot entre a la llamada y no sirve en persona.
+  Para el pitch: en producción la transcripción se puede alojar en servidores de Alestra.
 
-## Formato que le llega al cerebro (propuesta, para @brioness47)
-Las dos fuentes (simulada y Vexa) entregan lo mismo, para que el cerebro no sepa ni le importe de dónde viene.
-Un segmento por línea, en JSON:
+## Formato que le llega al cerebro (para @brioness47)
+Un segmento por línea, en JSON. **Para los reportes usa la transcripción final**, que tiene los nombres buenos:
 
 ```json
-{"hablante": "vendedor", "texto": "¿Cuántas sucursales necesitan conectar?", "inicio": "2026-10-24T15:02:11Z"}
+{"hablante": "Laura (Finanzas)", "rol": "cliente", "texto": "El contrato lo preferimos a 36 meses.", "inicio": "2026-10-24T19:17:23.000Z"}
 ```
 
-- `hablante`: `vendedor`, `cliente` o el nombre que dé Vexa si no se sabe el rol.
-- `texto`: lo que dijo; un segmento puede corregirse después (llega otra vez con el mismo `inicio` y otro texto).
+- `hablante`: "Nombre (Área)" si se sabe; si no, `vendedor`, `cliente` o `desconocido`.
+- `rol`: `vendedor` o `cliente` (o `desconocido` en vivo, si no se puede saber).
+- `texto`: ya corregido. En vivo viene además `original` (lo que entendió el motor) para comparar.
 - `inicio`: hora en que empezó a hablar (ISO 8601). Sirve para citar de dónde salió cada dato.
 
-Si el cerebro necesita otro campo, coméntalo en el issue del notetaker o del cerebro.
-
-## Estado
-- Script de prueba con Vexa (manda el bot y muestra la transcripción en la terminal): listo en una rama local de Sergio,
-  falta la API key y hacer una llamada de prueba. Sube por PR cuando funcione.
+Se descarga desde la página (en vivo y final) y también queda en `prototipos/notetaker/salida/` (no se sube al repo).
