@@ -11,6 +11,7 @@ import { resolve } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { codigoDeMeet, enviarBot, estadoBot, leerSegmentos, sacarBot, type ConfigVexa } from './vexa.ts';
 import { crearMemoria, type ConfigInsforge, type Memoria, type Recuerdo } from './memoria.ts';
+import { evaluar, preguntaDelAgente, preguntasDelCliente, type Ayuda, type PreguntaLlamada } from './ayuda.ts';
 
 const OPENROUTER = 'https://openrouter.ai/api/v1';
 
@@ -100,7 +101,10 @@ export function crearApi(config: ConfigApi) {
           transcripcion: { quien: string; texto: string }[];
           llamada?: { id: string; origen: string; codigo?: string };
         };
-        if (!memoria || !llamada?.id) return responder(res, 200, { ...(await analizar(config, sistema, catalogo, transcripcion, [])), memoria: null });
+        if (!memoria || !llamada?.id) {
+          const resultado = await analizar(config, sistema, catalogo, transcripcion, []);
+          return responder(res, 200, { ...resultado, memoria: null, ayuda: ayudaDe(catalogo, preguntasDelTurno(transcripcion, resultado), resultado) });
+        }
         return responder(res, 200, await analizarConMemoria(config, sistema, catalogo, memoria, llamada, transcripcion));
       }
       responder(res, 404, { error: 'Ruta no encontrada' });
@@ -136,14 +140,34 @@ async function analizarConMemoria(
 ) {
   const previo = await memoria.previo(llamada.id).catch(() => []);
   const resultado = await analizar(config, sistema, catalogo, transcripcion, previo);
+  const delTurno = preguntasDelTurno(transcripcion, resultado);
   let recuerdo: Recuerdo | null = null;
+  let ayuda = ayudaDe(catalogo, delTurno, resultado);
   try {
     const clienteId = await memoria.guardar(llamada, transcripcion, resultado);
+    // El conteo técnico usa todas las preguntas guardadas de la llamada, no solo las de este turno.
+    ayuda = ayudaDe(catalogo, await memoria.preguntas(llamada.id, delTurno), resultado);
+    await memoria.guardarAyuda(llamada.id, ayuda);
     recuerdo = await memoria.recordar(llamada.id, clienteId, resultado.industria, resultado.productos.map((p) => p.sku));
   } catch (e) {
     console.warn('[memoria] InsForge no respondió:', e instanceof Error ? e.message : e);
   }
-  return { ...resultado, memoria: recuerdo };
+  return { ...resultado, memoria: recuerdo, ayuda };
+}
+
+/** Las preguntas que hizo el cliente en la transcripción y la que el agente le sugiere ahora al vendedor. */
+function preguntasDelTurno(transcripcion: { quien: string; texto: string }[], resultado: { pregunta: { texto: string | null } | null }) {
+  return [...preguntasDelCliente(transcripcion), ...preguntaDelAgente(resultado.pregunta?.texto)];
+}
+
+function ayudaDe(catalogo: Catalogo, preguntas: PreguntaLlamada[], resultado: { productos: { sku: string; estado: string }[]; reglas: string[] }): Ayuda {
+  const textos = new Map(catalogo.reglas_escalamiento.map((r) => [r.id, r.cuando_entra_un_arquitecto]));
+  return evaluar(
+    preguntas,
+    resultado.productos,
+    resultado.reglas.map((id) => ({ id, texto: textos.get(id) ?? id })),
+    new Map(catalogo.productos.map((p) => [p.sku, p])),
+  );
 }
 
 async function analizar(

@@ -18,6 +18,7 @@ import {
   TEXTO,
   useAnchoVentana,
   VERDE,
+  VERDE_TEXTO,
 } from '../components/tema';
 import { conversacionDeGuion, GUIONES, type Pregunta } from '../lib/casos';
 import type { ProductoEnEtapa } from '../lib/cotizador';
@@ -49,11 +50,29 @@ interface Analisis {
   pregunta: Pregunta | null;
   /** De InsForge: lo que el cliente ya dijo en otras llamadas y clientes parecidos. null si no hay memoria configurada. */
   memoria: Memoria | null;
+  /** Algoritmo de ayuda de IT (server/ayuda.ts): si entra un ingeniero y para qué. */
+  ayuda: Ayuda | null;
 }
 
 interface Memoria {
   yaSabemos: { etiqueta: string; valor: string; fecha: string }[];
-  similares: { empresa: string; industria: string | null; comun: string; productos: string[] }[];
+  similares: { empresa: string; industria: string | null; comun: string; productos: string[]; it: string | null }[];
+}
+
+interface PuntoIT {
+  tema: string;
+  motivo: string;
+  fuente: string;
+}
+
+interface Ayuda {
+  tipoCaso: 'estándar' | 'mixto' | 'a la medida' | 'por definir';
+  nivel: 'no' | 'consulta' | 'acompaña';
+  tecnicas: number;
+  total: number;
+  entra: PuntoIT[];
+  noEntra: PuntoIT[];
+  aviso: string;
 }
 
 interface SegmentoNotetaker {
@@ -63,7 +82,7 @@ interface SegmentoNotetaker {
   inicio: number;
 }
 
-const SIN_ANALISIS: Analisis = { empresa: null, productos: [], datos: [], reglas: [], pregunta: null, memoria: null };
+const SIN_ANALISIS: Analisis = { empresa: null, productos: [], datos: [], reglas: [], pregunta: null, memoria: null, ayuda: null };
 const CADA_CUANTO_LEER_MS = 1500;
 const ESPERA_ADMISION_MS = 120_000;
 
@@ -461,6 +480,7 @@ export default function LlamadaPage() {
         </div>
       </header>
 
+      {!verTranscripcion && analisis.ayuda && <PanelAyuda ayuda={analisis.ayuda} apilado={apilado} />}
       {!verTranscripcion && analisis.memoria && <PanelMemoria memoria={analisis.memoria} apilado={apilado} />}
 
       {verTranscripcion ? (
@@ -705,6 +725,52 @@ function Transcripcion({ intervenciones }: { intervenciones: Intervencion[] }) {
   );
 }
 
+/** ¿Necesitas a IT? Tipo de caso, cuántas preguntas son técnicas y qué partes SÍ y cuáles NO llevan ingeniero. */
+function PanelAyuda({ ayuda, apilado }: { ayuda: Ayuda; apilado: boolean }) {
+  const color = ayuda.nivel === 'no' ? VERDE : ayuda.nivel === 'consulta' ? NARANJA : ROJO;
+  const textoColor = ayuda.nivel === 'no' ? VERDE_TEXTO : ayuda.nivel === 'consulta' ? NARANJA_TEXTO : ROJO;
+  const titulo = ayuda.nivel === 'no' ? 'No necesitas a IT' : ayuda.nivel === 'consulta' ? 'IT revisa una parte' : 'Pide apoyo de IT';
+  const proporcion = ayuda.total ? ayuda.tecnicas / ayuda.total : 0;
+  const rotulo: CSSProperties = { margin: '0 0 6px', fontSize: '0.78rem', fontWeight: 700, color: TERCIARIO, letterSpacing: '0.02em' };
+  const lista = (puntos: PuntoIT[], vacio: string) =>
+    puntos.length ? (
+      puntos.slice(0, 4).map((p) => (
+        <p key={p.tema + p.fuente} style={{ margin: '0 0 4px', fontSize: '0.86rem', color: TEXTO }}>
+          <strong>{p.tema}</strong> <span style={{ color: SECUNDARIO }}>· {p.motivo}</span>
+        </p>
+      ))
+    ) : (
+      <p style={{ margin: 0, fontSize: '0.86rem', color: TERCIARIO }}>{vacio}</p>
+    );
+  return (
+    <section style={{ ...tarjeta, padding: '14px 20px', display: 'grid', gap: '12px', borderLeft: `4px solid ${color}`, borderRadius: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '1.05rem', fontWeight: 800, color: textoColor }}>{titulo}</span>
+        <Chip>Caso {ayuda.tipoCaso}</Chip>
+        {ayuda.total > 0 && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: SECUNDARIO }}>
+            <span style={{ width: '90px', height: '6px', borderRadius: '3px', backgroundColor: SEPARADOR, overflow: 'hidden' }}>
+              <span style={{ display: 'block', width: `${Math.round(proporcion * 100)}%`, height: '100%', backgroundColor: proporcion >= 0.6 ? ROJO : AZUL_BOTON }} />
+            </span>
+            {ayuda.tecnicas} de {ayuda.total} preguntas técnicas
+          </span>
+        )}
+        <span style={{ fontSize: '0.88rem', color: TEXTO, flex: '1 1 260px' }}>{ayuda.aviso}</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: apilado ? '1fr' : '1fr 1fr', gap: '18px' }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={rotulo}>SÍ ENTRA EL INGENIERO</p>
+          {lista(ayuda.entra, 'Nada por ahora.')}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <p style={rotulo}>NO HACE FALTA: LO RESUELVES TÚ</p>
+          {lista(ayuda.noEntra, 'Todavía no hay productos estándar.')}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /** Lo que viene de InsForge: datos que el cliente ya dio en otra llamada y clientes parecidos. */
 function PanelMemoria({ memoria, apilado }: { memoria: Memoria; apilado: boolean }) {
   if (!memoria.yaSabemos.length && !memoria.similares.length) return null;
@@ -739,6 +805,7 @@ function PanelMemoria({ memoria, apilado }: { memoria: Memoria; apilado: boolean
               <strong>{s.empresa}</strong>
               {s.industria ? ` (${s.industria})` : ''} · <span style={{ color: SECUNDARIO }}>{s.comun}</span>
               {s.productos.length > 0 && <span style={{ color: TERCIARIO }}> · se le ofreció {s.productos.join(', ')}</span>}
+              {s.it && <span style={{ color: TERCIARIO }}> · {s.it}</span>}
             </p>
           ))}
         </div>

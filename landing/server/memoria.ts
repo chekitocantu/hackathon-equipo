@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createAdminClient } from '@insforge/sdk';
+import { claveDePregunta, type Ayuda, type PreguntaLlamada } from './ayuda.ts';
 
 export interface ConfigInsforge {
   url?: string;
@@ -28,7 +29,7 @@ export interface Recuerdo {
   /** Lo que el cliente ya dijo en llamadas anteriores. */
   yaSabemos: { etiqueta: string; valor: string; fecha: string }[];
   /** Hasta 3 clientes de la misma industria o con productos en común, con lo que se les ofreció. */
-  similares: { empresa: string; industria: string | null; comun: string; productos: string[] }[];
+  similares: { empresa: string; industria: string | null; comun: string; productos: string[]; it: string | null }[];
 }
 
 /** Lee INSFORGE_URL/INSFORGE_API_KEY de .env.local y, si faltan, el proyecto enlazado con `insforge link`. */
@@ -133,16 +134,35 @@ export function crearMemoria(config: ConfigInsforge, nombreDeSku: (sku: string) 
     const ids = [...candidatos.keys()].slice(0, 3);
     if (!ids.length) return { yaSabemos, similares: [] };
 
-    const [clientes, productos] = await Promise.all([
+    const [clientes, productos, llamadas] = await Promise.all([
       db.from('clientes').select('id, empresa, industria').in('id', ids),
       db.from('productos_cliente').select('cliente_id, sku').in('cliente_id', ids).limit(40),
+      db.from('llamadas').select('id, cliente_id').in('cliente_id', ids).limit(30),
     ]);
+    // Si a ese cliente le entró IT y por qué: le dice al vendedor qué esperar con un caso parecido.
+    const deCliente = new Map((llamadas.data ?? []).map((l) => [l.id as string, l.cliente_id as string]));
+    const ayudas = deCliente.size
+      ? await db.from('ayuda_it').select('llamada_id, tipo_caso, nivel, entra, actualizado').in('llamada_id', [...deCliente.keys()]).order('actualizado', { ascending: false }).limit(30)
+      : { data: [] };
+    const itDe = (id: string) => {
+      const a = (ayudas.data ?? []).find((x) => deCliente.get(x.llamada_id) === id);
+      if (!a) return null;
+      if (a.nivel === 'no') return `${a.tipo_caso}: sin IT`;
+      const temas = (a.entra as { tema: string }[]).map((e) => e.tema).slice(0, 2).join(', ');
+      return `${a.tipo_caso}: entró IT por ${temas}`;
+    };
     const similares = ids
       .map((id) => {
         const c = (clientes.data ?? []).find((x) => x.id === id);
         if (!c) return null;
         const suyos = (productos.data ?? []).filter((p) => p.cliente_id === id).map((p) => nombreDeSku(p.sku));
-        return { empresa: c.empresa as string, industria: (c.industria as string | null) ?? null, comun: candidatos.get(id)!, productos: suyos.slice(0, 4) };
+        return {
+          empresa: c.empresa as string,
+          industria: (c.industria as string | null) ?? null,
+          comun: candidatos.get(id)!,
+          productos: suyos.slice(0, 4),
+          it: itDe(id),
+        };
       })
       .filter((s): s is Recuerdo['similares'][number] => s !== null);
     return { yaSabemos, similares };
@@ -155,7 +175,30 @@ export function crearMemoria(config: ConfigInsforge, nombreDeSku: (sku: string) 
     return (await recordar(llamadaId, data.cliente_id as string, null, [])).yaSabemos;
   }
 
-  return { guardar, recordar, previo, cliente };
+  /** Guarda las preguntas nuevas de la llamada y devuelve todas, para que el conteo técnico abarque toda la llamada. */
+  async function preguntas(llamadaId: string, nuevas: PreguntaLlamada[]): Promise<PreguntaLlamada[]> {
+    const { data } = await db.from('preguntas_llamada').select('origen, texto, clave, tecnica, termino').eq('llamada_id', llamadaId).limit(200);
+    const vistas = new Set((data ?? []).map((p) => p.clave as string));
+    const filas = nuevas
+      .map((p) => ({ llamada_id: llamadaId, origen: p.origen, texto: p.texto, clave: claveDePregunta(p.texto), tecnica: p.tecnica, termino: p.termino }))
+      .filter((p) => p.clave && !vistas.has(p.clave) && vistas.add(p.clave));
+    if (filas.length) {
+      const r = await db.from('preguntas_llamada').insert(filas);
+      if (r.error) throw new Error(r.error.message);
+    }
+    return [...(data ?? []), ...filas].map((p) => ({ origen: p.origen, texto: p.texto, tecnica: p.tecnica, termino: p.termino }));
+  }
+
+  async function guardarAyuda(llamadaId: string, a: Ayuda) {
+    const fila = { tipo_caso: a.tipoCaso, nivel: a.nivel, tecnicas: a.tecnicas, total: a.total, entra: a.entra, no_entra: a.noEntra, actualizado: new Date().toISOString() };
+    const hay = await db.from('ayuda_it').select('llamada_id').eq('llamada_id', llamadaId).maybeSingle();
+    const r = hay.data
+      ? await db.from('ayuda_it').update(fila).eq('llamada_id', llamadaId)
+      : await db.from('ayuda_it').insert([{ llamada_id: llamadaId, ...fila }]);
+    if (r.error) throw new Error(r.error.message);
+  }
+
+  return { guardar, recordar, previo, cliente, preguntas, guardarAyuda };
 }
 
 export type Memoria = NonNullable<ReturnType<typeof crearMemoria>>;
