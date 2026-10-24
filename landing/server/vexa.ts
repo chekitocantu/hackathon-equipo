@@ -87,6 +87,8 @@ async function llamar(config: ConfigVexa, metodo: string, ruta: string, cuerpo?:
     method: metodo,
     headers: { 'X-API-Key': config.apiKey ?? '', 'Content-Type': 'application/json' },
     body: cuerpo ? JSON.stringify(cuerpo) : undefined,
+    // Se consulta cada 1.5 s; una respuesta que tarda más de 10 s ya no sirve y no debe trabar la siguiente.
+    signal: AbortSignal.timeout(10_000),
   });
   const json = (await respuesta.json().catch(() => ({}))) as Record<string, unknown>;
   if (!respuesta.ok) {

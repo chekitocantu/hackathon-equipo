@@ -126,9 +126,15 @@ async function transcribir(config: ConfigApi, audio: Buffer) {
   return texto.length < 80 && ALUCINACIONES.some((re) => re.test(texto)) ? '' : texto;
 }
 
+// Lo último que InsForge recordó de cada llamada, y su escritura en curso (una a la vez por llamada).
+const recuerdos = new Map<string, Recuerdo>();
+const escrituras = new Map<string, Promise<void>>();
+
 /**
- * El análisis normal, más la memoria: antes de llamar al modelo se le pasa lo que el cliente ya contó en otras llamadas;
- * después se guarda lo nuevo y se buscan clientes parecidos. Si InsForge falla, la llamada sigue sin memoria.
+ * El análisis normal, más la memoria. Para no frenar al vendedor, primero responde y después guarda:
+ * lo que el cliente ya contó en otras llamadas y los clientes parecidos son los que se recordaron en el turno
+ * anterior de esta llamada. Las escrituras van en fila por llamada para que dos turnos no se pisen.
+ * Si InsForge falla, la llamada sigue sin memoria.
  */
 async function analizarConMemoria(
   config: ConfigApi,
@@ -138,20 +144,24 @@ async function analizarConMemoria(
   llamada: { id: string; origen: string; codigo?: string },
   transcripcion: { quien: string; texto: string }[],
 ) {
-  const previo = await memoria.previo(llamada.id).catch(() => []);
-  const resultado = await analizar(config, sistema, catalogo, transcripcion, previo);
+  const recuerdo = recuerdos.get(llamada.id) ?? null;
+  const resultado = await analizar(config, sistema, catalogo, transcripcion, recuerdo?.yaSabemos ?? []);
   const delTurno = preguntasDelTurno(transcripcion, resultado);
-  let recuerdo: Recuerdo | null = null;
-  let ayuda = ayudaDe(catalogo, delTurno, resultado);
-  try {
-    const clienteId = await memoria.guardar(llamada, transcripcion, resultado);
-    // El conteo técnico usa todas las preguntas guardadas de la llamada, no solo las de este turno.
-    ayuda = ayudaDe(catalogo, await memoria.preguntas(llamada.id, delTurno), resultado);
-    await memoria.guardarAyuda(llamada.id, ayuda);
-    recuerdo = await memoria.recordar(llamada.id, clienteId, resultado.industria, resultado.productos.map((p) => p.sku));
-  } catch (e) {
-    console.warn('[memoria] InsForge no respondió:', e instanceof Error ? e.message : e);
-  }
+  // El conteo técnico solo usa las preguntas del cliente, y la transcripción ya trae todas las de la llamada.
+  const ayuda = ayudaDe(catalogo, delTurno, resultado);
+
+  const escritura = (escrituras.get(llamada.id) ?? Promise.resolve())
+    .then(async () => {
+      const clienteId = await memoria.guardar(llamada, transcripcion, resultado);
+      await memoria.preguntas(llamada.id, delTurno);
+      await memoria.guardarAyuda(llamada.id, ayuda);
+      recuerdos.set(llamada.id, await memoria.recordar(llamada.id, clienteId, resultado.industria, resultado.productos.map((p) => p.sku)));
+    })
+    .catch((e) => console.warn('[memoria] InsForge no respondió:', e instanceof Error ? e.message : e));
+  escrituras.set(llamada.id, escritura);
+  void escritura.then(() => {
+    if (escrituras.get(llamada.id) === escritura) escrituras.delete(llamada.id);
+  });
   return { ...resultado, memoria: recuerdo, ayuda };
 }
 
@@ -195,25 +205,32 @@ async function analizar(
   // Los modelos rápidos a veces dejan el JSON mal formado (una coma o una comilla de más).
   // Si pasa, se le muestra el error y se le pide que lo corrija una vez antes de rendirse.
   for (let intento = 1; ; intento++) {
-    const respuesta = await llamar(config, '/chat/completions', {
-      model: config.modeloAgente,
-      temperature: 0.2,
-      max_tokens: 1500,
-      messages: mensajes,
-    });
+    const respuesta = await preguntarAlAgente(config, { model: config.modeloAgente, temperature: 0.2, messages: mensajes });
     const texto = String(respuesta.choices?.[0]?.message?.content ?? '');
     try {
       return validar(leerJson(texto), catalogo);
     } catch (e) {
-      if (intento >= 2) throw new Error(`El agente regresó una respuesta que no se pudo leer (${e instanceof Error ? e.message : e})`);
-      console.warn('[agente] JSON mal formado, se pide corrección:', e instanceof Error ? e.message : e);
-      mensajes.push(
-        { role: 'assistant', content: texto },
-        {
-          role: 'user',
-          content: `Ese JSON no es válido (${e instanceof Error ? e.message : e}). Devuelve el mismo contenido como JSON válido: comillas dobles escapadas dentro de los textos, sin comas sobrantes y sin texto fuera del objeto.`,
-        },
-      );
+      const motivo = e instanceof Error ? e.message : String(e);
+      // Deja rastro de por qué: corte por tokens (fin "length"), texto fuera del objeto o JSON mal formado.
+      console.warn('[agente] JSON inválido:', {
+        intento,
+        motivo,
+        fin: respuesta.choices?.[0]?.finish_reason,
+        uso: respuesta.usage,
+        inicio: texto.slice(0, 400),
+        final: texto.slice(-200),
+      });
+      if (intento >= 2) throw new Error(`El agente regresó una respuesta que no se pudo leer (${motivo})`);
+      // Si llegó vacío no hay nada que corregir: se repite la misma petición.
+      if (texto.trim()) {
+        mensajes.push(
+          { role: 'assistant', content: texto },
+          {
+            role: 'user',
+            content: `Ese JSON no es válido (${motivo}). Devuelve el mismo contenido como JSON válido: comillas dobles escapadas dentro de los textos, sin comas sobrantes y sin texto fuera del objeto.`,
+          },
+        );
+      }
     }
   }
 }
@@ -271,6 +288,20 @@ function validar(crudo: Record<string, unknown>, catalogo: Catalogo) {
         ? { texto: texto(pregunta.texto, 220), motivo: texto(pregunta.motivo, 120) ?? '', fuente: texto(pregunta.fuente, 80) ?? 'Agente' }
         : null,
   };
+}
+
+/**
+ * Los modelos nuevos razonan solos antes de contestar, y ese razonamiento cuenta dentro de max_tokens: con 1,500
+ * Haiku 5.5 se los gastaba todos pensando y el JSON salía vacío. Sin razonamiento un turno tarda ~2 s en vez de ~10 s.
+ * Si el modelo configurado no permite apagarlo (OpenRouter responde 400), se pide el mínimo.
+ */
+async function preguntarAlAgente(config: ConfigApi, cuerpo: Record<string, unknown>) {
+  try {
+    return await llamar(config, '/chat/completions', { ...cuerpo, max_tokens: 4000, reasoning: { enabled: false } });
+  } catch (e) {
+    if (!(e instanceof Error && e.message.startsWith('OpenRouter 400'))) throw e;
+    return llamar(config, '/chat/completions', { ...cuerpo, max_tokens: 4000, reasoning: { effort: 'low' } });
+  }
 }
 
 function promptDelAgente(catalogo: Catalogo) {
@@ -331,7 +362,7 @@ REGLAS
 - estado "pendiente": aplica, pero falta un dato para cotizarlo.
 - estado "arquitecto": el producto es "a la medida", o el cliente dijo algo que cumple su condición de "entra arquitecto" o una regla ESC.
 - estado "sugerido": el catálogo lo recomienda junto a un producto incluido o completa un paquete, pero el cliente no lo pidió. Máximo 2.
-- "cantidad": solo si el cliente dijo el número o se deduce directo de lo que dijo. Nunca la supongas.
+- "cantidad": solo si el cliente dijo el número o se deduce directo de lo que dijo. Nunca la supongas. En productos que se cobran "por mes" sin unidad es el número de piezas (ej. un enlace por sucursal, racks), salvo en el agente de conocimiento interno, donde son usuarios.
 - "nota": máximo 4 palabras, solo cuando ayude (ej. "3 sucursales", "volver en 1 h"). Si no, omítela.
 - "reglas": ids ESC que ya se cumplen por lo que dijo el cliente. No pongas reglas que solo podrían cumplirse.
 - "datos": los 3 a 5 datos que más importan para cotizar este caso, con "valor" null si todavía no se sabe. "dato" en máximo 5 palabras.
@@ -342,16 +373,27 @@ REGLAS
 
 interface RespuestaOpenRouter {
   text?: string;
-  choices?: { message?: { content?: string } }[];
+  choices?: { message?: { content?: string }; finish_reason?: string }[];
+  usage?: unknown;
   error?: { message?: string };
 }
 
+// Si OpenRouter se cuelga, el vendedor no puede quedarse esperando: se corta y el tablero sigue con lo que tenía.
+const ESPERA_MS: Record<string, number> = { '/audio/transcriptions': 20_000, '/chat/completions': 30_000 };
+
 async function llamar(config: ConfigApi, ruta: string, cuerpo: unknown): Promise<RespuestaOpenRouter> {
-  const respuesta = await fetch(`${OPENROUTER}${ruta}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json', 'X-Title': 'Agente de Ventas' },
-    body: JSON.stringify(cuerpo),
-  });
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(`${OPENROUTER}${ruta}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json', 'X-Title': 'Agente de Ventas' },
+      body: JSON.stringify(cuerpo),
+      signal: AbortSignal.timeout(ESPERA_MS[ruta] ?? 30_000),
+    });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'TimeoutError') throw new Error(`OpenRouter no respondió en ${(ESPERA_MS[ruta] ?? 30_000) / 1000} s`);
+    throw e;
+  }
   const json = (await respuesta.json().catch(() => ({}))) as RespuestaOpenRouter;
   if (!respuesta.ok) throw new Error(`OpenRouter ${respuesta.status}: ${json.error?.message ?? 'sin detalle'}`);
   return json;

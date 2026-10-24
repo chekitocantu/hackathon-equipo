@@ -85,13 +85,19 @@ export function crearMemoria(config: ConfigInsforge, nombreDeSku: (sku: string) 
     const guardadas = await db.from('segmentos').select('orden').eq('llamada_id', llamada.id).order('orden', { ascending: false }).limit(1);
     const desde = guardadas.data?.length ? (guardadas.data[0].orden as number) + 1 : 0;
     const nuevas = transcripcion.slice(desde).map((s, i) => ({ llamada_id: llamada.id, orden: desde + i, quien: s.quien, texto: s.texto }));
-    if (nuevas.length) await db.from('segmentos').insert(nuevas);
+    if (nuevas.length) {
+      const r = await db.from('segmentos').insert(nuevas);
+      if (r.error) throw new Error(r.error.message);
+    }
 
     if (!clienteId) return null;
     for (const d of analisis.datos) {
       if (!d.etiqueta || !d.valor) continue;
       const fila = { cliente_id: clienteId, llamada_id: llamada.id, etiqueta: d.etiqueta, valor: d.valor, actualizado: ahora };
-      const hay = await db.from('datos_cliente').select('id').eq('cliente_id', clienteId).eq('etiqueta', d.etiqueta).maybeSingle();
+      const hay = await db.from('datos_cliente').select('id, valor').eq('cliente_id', clienteId).eq('etiqueta', d.etiqueta).maybeSingle();
+      // Si el cliente repite lo que ya había dicho, el dato se queda con su llamada original; si no, dejaría
+      // de aparecer en "ya lo sabemos" (recordar() salta los datos de la llamada en curso).
+      if (hay.data?.valor === d.valor) continue;
       if (hay.data) await db.from('datos_cliente').update(fila).eq('id', hay.data.id);
       else await db.from('datos_cliente').insert([fila]);
     }

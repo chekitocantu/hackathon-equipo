@@ -21,6 +21,7 @@ import {
 } from '../components/tema';
 import type { Ayuda } from '../lib/ayuda';
 import { conversacionDeGuion, GUIONES, type Pregunta } from '../lib/casos';
+import { informacionQueFalta } from '../lib/catalogo';
 import type { ProductoEnEtapa } from '../lib/cotizador';
 import { Segmentador, type Segmento } from '../lib/grabador';
 import { useColaSugerencias } from '../lib/momento';
@@ -77,8 +78,18 @@ const reloj = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 };
 
+// Ninguna petición puede congelar la llamada: si el servidor no contesta a tiempo, se avisa y se sigue.
+// Es un poco más que lo que el servidor espera a OpenRouter (server/api.ts), para que llegue su error primero.
+const ESPERA_MAXIMA_MS = 35_000;
+
 async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
-  const respuesta = await fetch(ruta, init);
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(ruta, { signal: AbortSignal.timeout(ESPERA_MAXIMA_MS), ...init });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'TimeoutError') throw new Error('el servidor tardó demasiado en responder');
+    throw e;
+  }
   const json = await respuesta.json().catch(() => ({}));
   if (!respuesta.ok) throw new Error(json.error ?? `Error ${respuesta.status}`);
   return json as T;
@@ -237,6 +248,8 @@ export default function LlamadaPage() {
     }
     cola.current.corriendo = true;
     setAnalizando(true);
+    // Si en lo que responde el agente empieza otra llamada, su respuesta ya no aplica.
+    const id = llamadaId.current;
     try {
       const resultado = await pedir<Analisis>(
         '/api/analizar',
@@ -245,12 +258,21 @@ export default function LlamadaPage() {
           llamada: datosDeLlamada(),
         }),
       );
+      if (id !== llamadaId.current) return;
       setAnalisis(resultado);
       const nueva = resultado.pregunta?.texto;
       if (nueva) setSugeridas((s) => (s.includes(nueva) ? s : [...s, nueva]));
       setAviso(null);
     } catch (e) {
-      setAviso(`Agente: ${e instanceof Error ? e.message : e}`);
+      if (id !== llamadaId.current) return;
+      const mensaje = e instanceof Error ? e.message : String(e);
+      const respaldo = analisisDeRespaldo();
+      if (respaldo) {
+        setAnalisis(respaldo);
+        setAviso(`El agente no respondió (${mensaje}); el tablero sigue con el guion del caso.`);
+      } else {
+        setAviso(`Agente: ${mensaje}`);
+      }
     } finally {
       cola.current.corriendo = false;
       setAnalizando(false);
@@ -259,6 +281,27 @@ export default function LlamadaPage() {
         void analizar();
       }
     }
+  }
+
+  /**
+   * Respaldo del modo demo: si el agente no responde (red, OpenRouter), el tablero muestra la etapa del guion
+   * que va con lo que ya dijo el cliente. Son los mismos datos del simulador, todos del catálogo.
+   */
+  function analisisDeRespaldo(): Analisis | null {
+    const f = activa.current.fuente;
+    if (f?.tipo !== 'demo') return null;
+    const guion = GUIONES[f.caso];
+    const turnos = conversacion.current.filter((i) => i.quien === 'Cliente').length;
+    const etapa = guion.etapas[Math.min(turnos, guion.etapas.length) - 1];
+    if (!etapa) return null;
+    return {
+      ...SIN_ANALISIS,
+      empresa: guion.caso.empresa,
+      productos: etapa.productos,
+      datos: informacionQueFalta(guion.caso).map((etiqueta, i) => ({ etiqueta, valor: etapa.datos[i] ?? null })),
+      reglas: etapa.reglas,
+      pregunta: etapa.pregunta,
+    };
   }
 
   function datosDeLlamada() {

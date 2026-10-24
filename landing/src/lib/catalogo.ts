@@ -21,6 +21,8 @@ export interface Producto {
   unidad_cobro: string;
   precio_mensual_mxn: number | null;
   cargo_unico_mxn: number | null;
+  cantidad_minima: number | null;
+  cantidad_maxima: number | null;
   plazo_minimo_meses: number | null;
   requiere_alguno_de: string[];
   se_recomienda_con: string[];
