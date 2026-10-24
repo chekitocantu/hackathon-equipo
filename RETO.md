@@ -61,6 +61,27 @@ Preguntas guía:
 | Presentación | Pitch claro y profesional; la demo muestra el valor en el tiempo asignado. |
 | Colaboración | Todo el equipo participa, también al responder a los jueces. |
 
+## Contexto: quiénes son los clientes de Alestra (información pública)
+Alestra es la marca con la que Axtel atiende a empresas y gobierno en México. Datos del reporte del 3T 2026 de Axtel
+(https://www.axtelcorp.mx/repositorio/inversionistas/Reportes-Financieros/T3-2026-ESP.pdf):
+
+| Segmento | Ingresos 3T26 | % de ingresos 2026 | Crecimiento anual | Qué compran |
+|---|---|---|---|---|
+| **Empresarial** | Ps. 2,228 M | 73% | +2% | Telecom (Ps. 1,437 M, −1%): conectividad, colaboración, redes administradas, movilidad. TI y Ciberseguridad (Ps. 657 M, +15%): nube recurrente y proyectos de ciberseguridad, sobre todo para el **sector financiero**. Voz: 6% y cayendo. |
+| **Gobierno** | Ps. 473 M | 13% | +41% | 77% federal, 23% estatal y municipal. Conectividad y colaboración (+56%), integración de sistemas, infraestructura digital y centros de datos. |
+| Mayorista (infraestructura) | Ps. 453 M | 14% | −18% | Otros operadores (no es venta consultiva). |
+
+- **Sectores que Alestra promueve en su sitio:** finanzas, comercio, transporte y logística, manufactura.
+- **Líneas de producto:** TI (infraestructura, nube, datos), Ciberseguridad, Movilidad y Telecom. Tienen conexión privada a AWS, Azure, Google, Oracle e IBM.
+- **También venden por distribuidores** (Programa Alianza).
+- No publican nombres de clientes ni cuántos son.
+- Contexto extra: en el 3T26, 4 Tech Plus y Transtelco hicieron ofertas para comprar Axtel.
+
+**Qué implica para el Traductor:**
+- El cliente típico es una **empresa mediana o grande** que compra conectividad + TI/ciberseguridad: una mezcla de estándar y a la medida.
+- Lo que más crece es nube y ciberseguridad, que son las que más necesitan "traducción" técnica. Buena persona para la demo: un banco o una fintech que pide conectividad para sucursales + ciberseguridad.
+- Gobierno compra casi siempre por licitación, que es otro proceso. Conviene dejarlo fuera del MVP y decirlo en el pitch.
+
 ## Agenda del día (sábado 2026-10-24)
 | Hora | Qué |
 |---|---|
