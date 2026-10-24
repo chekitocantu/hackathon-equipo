@@ -1,11 +1,13 @@
 // El tablero del vendedor: mapa de soluciones, siguiente pregunta, lo que falta saber y la cotización.
 // Lo comparten el simulador (datos de un guion) y "Enlaza tu llamada" (datos que saca Claude en vivo).
 import { useState, type ReactNode } from 'react';
+import Documento, { type TipoDocumento } from './Documento';
 import MapaSoluciones, { COLORES } from './MapaSoluciones';
 import type { Pregunta } from '../lib/casos';
 import { CONDICIONES, FAMILIAS, producto, regla } from '../lib/catalogo';
 import { carrilDe, cotizar, type Carril, type LineaCotizada, type ProductoEnEtapa } from '../lib/cotizador';
 import { conTipoDeCaso, evaluar, preguntaDelAgente, preguntasDelCliente, type Ayuda, type ProductoCatalogo } from '../lib/ayuda';
+import type { ClienteDocumento } from '../lib/documentos';
 import {
   AZUL,
   AZUL_BOTON,
@@ -57,6 +59,8 @@ interface TableroProps {
   preguntasSugeridas?: string[];
   /** Si el servidor ya evaluó la llamada completa (con lo guardado en InsForge), se usa esa en vez de la local. */
   ayuda?: Ayuda | null;
+  /** Quién es el cliente, para encabezar la propuesta y el brief. */
+  cliente?: ClienteDocumento;
 }
 
 const CATALOGO_IT = {
@@ -81,8 +85,10 @@ export default function Tablero({
   conversacion,
   preguntasSugeridas = [],
   ayuda: ayudaServidor,
+  cliente,
 }: TableroProps) {
   const [plazo, setPlazo] = useState(12);
+  const [documento, setDocumento] = useState<TipoDocumento | null>(null);
 
   const cotizacion = cotizar(productos, plazo);
   // Las reglas que marcó la IA más las que salen de las cuentas (ESC-09 por monto), sin repetir.
@@ -344,6 +350,8 @@ export default function Tablero({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
           {carril !== 'a la medida' && (
             <button
+              disabled={!listo}
+              onClick={() => setDocumento('propuesta')}
               style={{
                 ...botonPrimario,
                 flex: carril === 'mixto' ? '1 1 100%' : 1,
@@ -357,6 +365,7 @@ export default function Tablero({
           )}
           {carril !== 'estándar' && (
             <button
+              onClick={() => setDocumento('brief')}
               style={
                 carril === 'a la medida'
                   ? { ...botonPrimario, flex: 1, padding: '12px 18px', backgroundColor: listo ? MORADO_TEXTO : '#e8e8ed', color: listo ? '#ffffff' : TERCIARIO }
@@ -369,6 +378,20 @@ export default function Tablero({
         </div>
         <p style={{ margin: '10px 0 0', fontSize: '0.72rem', color: TERCIARIO, textAlign: 'center' }}>Precios del catálogo simulado del hackathon</p>
       </aside>
+      {documento && (
+        <Documento
+          tipo={documento}
+          entrada={{
+            cliente: cliente ?? { empresa: null },
+            datos: datos.map((d) => ({ etiqueta: d.etiqueta, valor: d.valor })),
+            cotizacion,
+            carril,
+            ayuda,
+            conversacion,
+          }}
+          alCerrar={() => setDocumento(null)}
+        />
+      )}
     </div>
   );
 }

@@ -118,6 +118,7 @@ export default function SimuladorPage() {
         conversacion={guion.etapas.slice(0, indice + 1).map((e) => ({ quien: 'Cliente', texto: e.cliente }))}
         preguntasSugeridas={guion.etapas.slice(0, indice).flatMap((e) => (e.pregunta ? [e.pregunta.texto] : []))}
         alHacerPregunta={() => irA(indice + 1)}
+        cliente={{ empresa: caso.empresa, industria: caso.industria, ciudad: caso.ciudad, empleados: caso.empleados }}
       />
     </div>
   );
