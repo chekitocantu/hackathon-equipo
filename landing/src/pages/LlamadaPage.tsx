@@ -23,6 +23,8 @@ import type { Ayuda } from '../lib/ayuda';
 import { conversacionDeGuion, GUIONES, type Pregunta } from '../lib/casos';
 import type { ProductoEnEtapa } from '../lib/cotizador';
 import { Segmentador, type Segmento } from '../lib/grabador';
+import { useColaSugerencias } from '../lib/momento';
+import PanelSugerencias from '../components/PopupSugerencia';
 
 type Quien = 'Cliente' | 'Vendedor';
 type Fase = 'preparar' | 'conectando' | 'en-llamada' | 'terminada';
@@ -206,6 +208,16 @@ export default function LlamadaPage() {
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fuente, fase, indiceDemo]);
+
+  // Panel para el vendedor: las preguntas del agente entran a una cola de 10 solo en un buen momento
+  // (pausa, tema o cierre) y no cambian de texto; el vendedor puede fijar una con un clic.
+  const sugerencias = useColaSugerencias(
+    analisis.pregunta,
+    intervenciones,
+    fase === 'en-llamada',
+    inicio,
+    () => fuente?.tipo === 'pestaña' && niveles.current.Cliente > 0.015,
+  );
 
   /** Recibe la conversación completa de cualquier fuente; si cambió algo, el agente la vuelve a leer. */
   function recibir(lista: Intervencion[]) {
@@ -495,6 +507,17 @@ export default function LlamadaPage() {
           }
         />
       )}
+
+      <PanelSugerencias
+        visible={sugerencias.items.length > 0 && !verTranscripcion}
+        items={sugerencias.items}
+        fijadaId={sugerencias.fijadaId}
+        apilado={apilado}
+        minimizado={sugerencias.minimizado}
+        alMinimizar={sugerencias.alternarMinimizado}
+        alClicItem={sugerencias.alternarFijada}
+        alMarcarHecha={sugerencias.marcarHecha}
+      />
     </div>
   );
 }
@@ -550,10 +573,37 @@ function Preparar({
           Enlaza tu llamada
         </h1>
         <p style={{ margin: '0 0 22px', fontSize: '1.1rem', color: SECUNDARIO, lineHeight: 1.45 }}>
-          El asistente entra a tu Google Meet, toma notas y te dice qué preguntar y cuánto cotizar.
+          El asistente escucha la llamada, toma notas y te dice qué preguntar y cuánto cotizar.
         </p>
 
+        {/* Lo principal no necesita bot: se escucha desde esta pestaña (Meet, Teams, Zoom) o el micrófono. */}
         <div style={{ ...tarjeta, padding: '24px 28px' }}>
+          <p style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Escuchar desde aquí</p>
+          <p style={{ margin: '4px 0 12px', fontSize: '0.9rem', color: SECUNDARIO, lineHeight: 1.45 }}>
+            Comparte la pestaña de tu videollamada con su audio, o usa el micrófono si la reunión es en persona. Funciona en Chrome, Edge o Brave; en videollamada usa audífonos.
+          </p>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 14px', fontSize: '0.9rem', color: SECUNDARIO, cursor: 'pointer' }}>
+            <input type="checkbox" checked={conMicro} onChange={(e) => setConMicro(e.target.checked)} style={{ accentColor: AZUL_BOTON }} />
+            En videollamada, escuchar también mi micrófono
+          </label>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button style={{ ...botonPrimario, padding: '12px 18px' }} onClick={() => void capturarPestana(false, conMicro)}>
+              Escuchar videollamada
+            </button>
+            <button style={{ ...botonTexto, padding: '12px 4px' }} onClick={() => void capturarPestana(true, false)}>
+              Reunión en persona (micrófono)
+            </button>
+          </div>
+          {error && !respaldo && <p style={{ margin: '12px 0 0', fontSize: '0.9rem', color: ROJO, lineHeight: 1.45 }}>{error}</p>}
+        </div>
+
+        <div style={{ margin: '14px 4px 0' }}>
+          <button style={{ ...botonTexto, padding: 0, fontSize: '0.85rem', color: SECUNDARIO }} onClick={() => setRespaldo((r) => !r)}>
+            {respaldo ? 'Ocultar asistente en Meet' : 'Mandar un asistente a Google Meet (necesita key de Vexa) ›'}
+          </button>
+        </div>
+
+        {respaldo && <div style={{ ...tarjeta, padding: '24px 28px', marginTop: '10px' }}>
           <label style={{ display: 'block', fontSize: '0.88rem', color: SECUNDARIO, marginBottom: '6px' }} htmlFor="link">
             Link de la reunión
           </label>
@@ -592,7 +642,7 @@ function Preparar({
           <p style={{ margin: '12px 0 0', fontSize: '0.8rem', color: TERCIARIO, lineHeight: 1.45 }}>
             Avísale al cliente que entra un asistente que toma notas de la llamada.
           </p>
-        </div>
+        </div>}
 
         <div style={{ ...tarjeta, padding: '20px 28px', marginTop: '14px' }}>
           <p style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>¿Sin reunión a la mano?</p>
@@ -611,28 +661,6 @@ function Preparar({
           </button>
         </div>
 
-        <div style={{ margin: '14px 4px 0' }}>
-          <button style={{ ...botonTexto, padding: 0, fontSize: '0.85rem', color: SECUNDARIO }} onClick={() => setRespaldo((r) => !r)}>
-            {respaldo ? 'Ocultar respaldo sin bot' : 'Respaldo sin bot: capturar la pestaña de Meet ›'}
-          </button>
-          {respaldo && (
-            <div style={{ marginTop: '10px', fontSize: '0.88rem', color: SECUNDARIO, lineHeight: 1.5 }}>
-              Comparte la pestaña de Meet con su audio y se transcribe con Whisper. Funciona en Chrome o Edge; usa audífonos.
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0', cursor: 'pointer' }}>
-                <input type="checkbox" checked={conMicro} onChange={(e) => setConMicro(e.target.checked)} style={{ accentColor: AZUL_BOTON }} />
-                Escuchar también mi micrófono
-              </label>
-              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-                <button style={{ ...botonTexto, padding: 0 }} onClick={() => void capturarPestana(false, conMicro)}>
-                  Capturar pestaña de Meet
-                </button>
-                <button style={{ ...botonTexto, padding: 0 }} onClick={() => void capturarPestana(true, false)}>
-                  Probar solo con micrófono
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
