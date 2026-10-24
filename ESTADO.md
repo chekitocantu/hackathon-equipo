@@ -28,7 +28,7 @@ Ya tenemos el reto (RETO.md), la idea base (el Traductor), una landing, un dashb
 | Rubén | Cerebro del Traductor: avisa en vivo lo que se le pasa a ventas y al final manda a cada área (IT, Finanzas) su reporte con sus términos y acrónimos → [notas/lenguaje-traductor.md](notas/lenguaje-traductor.md) |
 
 Lo que une al notetaker con el cerebro es el formato de los segmentos de la transcripción: propuesta en
-[notas/notetaker.md](notas/notetaker.md#formato-que-le-llega-al-cerebro-propuesta-para-brioness47).
+[notas/notetaker.md](notas/notetaker.md#formato-que-le-llega-al-cerebro-para-brioness47).
 
 ## Cómo correrlo
 Por definir cuando exista el esqueleto del proyecto.
