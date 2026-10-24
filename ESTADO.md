@@ -31,7 +31,11 @@ Lo que une al notetaker con el cerebro es el formato de los segmentos de la tran
 [notas/notetaker.md](notas/notetaker.md#formato-que-le-llega-al-cerebro-para-brioness47).
 
 ## Cómo correrlo
-Por definir cuando exista el esqueleto del proyecto.
+El esqueleto del proyecto completo sigue por definir (#2). Lo que ya corre:
+
+- **Notetaker** (`prototipos/notetaker/`, detalle en [notas/notetaker.md](notas/notetaker.md)): con Node 22+ y una key de
+  OpenRouter (`sk-or-...`) en `~/.openrouter-key`, corre `node prototipos/notetaker/server.mjs` y abre
+  http://localhost:5180 en Chrome, Edge o Brave.
 
 ## Entrega
 - Fecha y hora límite: **2026-10-24 a las 19:00, sin excepciones**

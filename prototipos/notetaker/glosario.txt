@@ -1,0 +1,37 @@
+Alestra — marca empresarial de Axtel
+SD-WAN — red amplia definida por software
+MPLS — red privada entre sitios del operador
+SLA — nivel de servicio garantizado (ej. 99.9%)
+Mbps / Gbps — megabits / gigabits por segundo
+última milla — tramo final hasta el cliente
+fibra óptica — medio físico del enlace
+enlace dedicado / internet dedicado — conexión no compartida
+VPN — red privada virtual
+firewall / NGFW — cortafuegos / de nueva generación
+SOC — centro de operaciones de seguridad
+SIEM — correlación de eventos de seguridad
+EDR — protección de equipos (endpoints)
+DDoS — ataque de denegación de servicio
+WAF — firewall para aplicaciones web
+colocation — renta de espacio en centro de datos
+nube privada / nube pública / nube híbrida
+AWS, Azure, Google Cloud, Oracle Cloud, IBM Cloud
+conexión privada a nube — enlace directo sin internet (ExpressRoute, Direct Connect)
+latencia / jitter — retardo / variación del retardo
+redundancia / failover — respaldo / cambio automático al respaldo
+LAN / WAN — red local / red amplia
+Wi-Fi administrado — red inalámbrica operada por Alestra
+Microsoft Teams, Webex, troncal SIP, PBX — colaboración y voz
+CNBV — regulador bancario en México
+PCI-DSS — norma de seguridad para pagos con tarjeta
+ISO 27001 — norma de seguridad de la información
+LFPDPPP — ley mexicana de datos personales
+MRC — cargo recurrente mensual
+NRC — cargo único de instalación
+CAPEX / OPEX — inversión / gasto operativo
+TCO / ROI — costo total / retorno de inversión
+IVA, factura, orden de compra, cotización, propuesta económica
+plazo forzoso / penalización — duración mínima del contrato / cargo por cancelar
+SKU — clave de producto del catálogo
+preventa / arquitecto de soluciones
+sucursal / matriz

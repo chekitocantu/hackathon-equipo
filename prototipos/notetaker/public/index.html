@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Traductor · Notetaker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./estilos.css">
+</head>
+<body>
+  <header>
+    <h1>Notetaker del Traductor</h1>
+    <p class="subtitulo">Transcripción en vivo + corrección con DeepSeek</p>
+  </header>
+
+  <section class="asistentes">
+    <label for="asistentes">¿Quién está en la reunión? <span>(opcional, uno por línea: nombre – área)</span></label>
+    <textarea id="asistentes" rows="3" placeholder="Sergio – Ventas Alestra&#10;Laura – Finanzas&#10;Pedro – TI"></textarea>
+  </section>
+
+  <section class="controles">
+    <button id="btn-mic" type="button">Solo micrófono (reunión en persona)</button>
+    <button id="btn-llamada" type="button">Micrófono + audio de la llamada</button>
+    <button id="btn-parar" type="button" disabled>Detener</button>
+    <span id="estado">Listo</span>
+  </section>
+
+  <section class="medidores">
+    <div class="medidor">
+      <span>Tú (micrófono)</span>
+      <div class="barra"><div id="nivel-mic"></div></div>
+    </div>
+    <div class="medidor">
+      <span>Llamada</span>
+      <div class="barra"><div id="nivel-llamada"></div></div>
+    </div>
+  </section>
+
+  <label class="toggle">
+    <input type="checkbox" id="ver-original" checked>
+    Mostrar lo que entendió antes de corregir
+  </label>
+
+  <main id="transcripcion"></main>
+
+  <section id="final" hidden>
+    <h2>Transcripción final <span id="final-estado"></span></h2>
+    <p class="nota">Voces separadas con la grabación completa y nombradas con la lista de asistentes. Esta es la versión para los reportes.</p>
+    <div id="voces"></div>
+    <div id="final-turnos"></div>
+  </section>
+
+  <footer>
+    <a id="descargar" href="#" download="transcripcion-en-vivo.jsonl">Descargar transcripción en vivo (JSONL)</a>
+    <a id="descargar-final" href="#" download="transcripcion-final.jsonl" hidden>Descargar transcripción final (JSONL)</a>
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
