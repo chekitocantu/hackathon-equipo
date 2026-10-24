@@ -1,17 +1,22 @@
 // Notetaker del Traductor: sirve la página y recibe pedazos de audio, los transcribe con OpenRouter
-// (Whisper / GPT transcribe, idioma español) y los corrige con DeepSeek, en orden.
+// (idioma español) y los corrige con DeepSeek, en orden. Al terminar recibe la grabación completa,
+// separa las voces (ElevenLabs Scribe) y DeepSeek le pone nombre a cada una.
 // Uso: node prototipos/notetaker/server.mjs   → abre http://localhost:5180
-// Variables opcionales: PUERTO, MODELO_STT (default openai/gpt-4o-mini-transcribe).
+// Variables opcionales: PUERTO, MODELO_STT (en vivo, default openai/gpt-4o-mini-transcribe),
+// MODELO_VOCES (al final, default elevenlabs/scribe-v2).
 import { createServer } from "node:http";
-import { readFile, mkdir, appendFile } from "node:fs/promises";
+import { readFile, mkdir, appendFile, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { join, dirname, extname, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import { leerKey, crearCorrector, glosario } from "./corrector.mjs";
+import { leerKey, crearCorrector, nombrarVoces, glosario } from "./corrector.mjs";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const PUBLICO = join(AQUI, "public");
 const PUERTO = Number(process.env.PUERTO || 5180);
 const MODELO_STT = process.env.MODELO_STT || "openai/gpt-4o-mini-transcribe";
+const MODELO_VOCES = process.env.MODELO_VOCES || "elevenlabs/scribe-v2";
+const API_STT = "https://openrouter.ai/api/v1/audio/transcriptions";
 const KEY = leerKey();
 if (!KEY.startsWith("sk-or-")) {
   console.error("La transcripción va por OpenRouter: hace falta una key sk-or-... en ~/.openrouter-key o ~/.deepseek-key.");
@@ -22,29 +27,64 @@ if (!KEY.startsWith("sk-or-")) {
 const PISTA = "Llamada de ventas de Alestra en español de México. Términos: "
   + glosario.split("\n").map((l) => l.split(" — ")[0]).join(", ").slice(0, 600);
 
-let corrector = crearCorrector(KEY);
-let cola = Promise.resolve(); // las correcciones van en orden para que DeepSeek vea el contexto correcto
-let salida = "";
+// Cada pestaña que empieza a grabar es una sesión con su propio corrector, cola y archivo de salida.
+const sesiones = new Map();
 
-async function nuevaSesion() {
-  corrector = crearCorrector(KEY);
-  cola = Promise.resolve();
+async function nuevaSesion(asistentes) {
   await mkdir(join(AQUI, "salida"), { recursive: true });
-  salida = join(AQUI, "salida", new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".jsonl");
+  const id = randomUUID();
+  const s = {
+    id,
+    asistentes,
+    corrector: crearCorrector(KEY, asistentes),
+    cola: Promise.resolve(), // las correcciones van en orden para que DeepSeek vea el contexto correcto
+    archivo: join(AQUI, "salida", new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + "-" + id.slice(0, 4)),
+  };
+  sesiones.set(id, s);
+  if (asistentes) await writeFile(s.archivo + "-asistentes.txt", asistentes);
+  return s;
+}
+
+function extension(tipo) {
+  return tipo.includes("ogg") ? "ogg" : tipo.includes("mp4") ? "mp4" : tipo.includes("wav") ? "wav" : "webm";
 }
 
 async function transcribir(audio, tipo) {
   const form = new FormData();
-  const ext = tipo.includes("ogg") ? "ogg" : tipo.includes("mp4") ? "mp4" : tipo.includes("wav") ? "wav" : "webm";
-  form.append("file", new Blob([audio], { type: tipo }), `segmento.${ext}`);
+  form.append("file", new Blob([audio], { type: tipo }), `segmento.${extension(tipo)}`);
   form.append("model", MODELO_STT);
   form.append("language", "es");
   form.append("prompt", PISTA);
-  const res = await fetch("https://openrouter.ai/api/v1/audio/transcriptions", {
-    method: "POST", headers: { Authorization: `Bearer ${KEY}` }, body: form,
-  });
+  const res = await fetch(API_STT, { method: "POST", headers: { Authorization: `Bearer ${KEY}` }, body: form });
   if (!res.ok) throw new Error(`Transcripción ${res.status}: ${(await res.text()).slice(0, 200)}`);
   return ((await res.json()).text || "").trim();
+}
+
+// Grabación completa → turnos [{voz, inicio, texto}] agrupando las palabras seguidas de la misma voz.
+async function separarVoces(audio, tipo) {
+  const res = await fetch(API_STT, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODELO_VOCES,
+      language: "es",
+      response_format: "verbose_json",
+      timestamp_granularities: ["word"],
+      input_audio: { data: audio.toString("base64"), format: extension(tipo) },
+      provider: { options: { elevenlabs: { diarize: true }, deepgram: { diarize: true } } },
+    }),
+  });
+  if (!res.ok) throw new Error(`Separación de voces ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const datos = await res.json();
+  const turnos = [];
+  for (const p of datos.words || []) {
+    const voz = p.speaker ?? 0;
+    const ultimo = turnos.at(-1);
+    if (ultimo && ultimo.voz === voz) ultimo.texto += " " + p.word.trim();
+    else turnos.push({ voz, inicio: p.start ?? 0, texto: p.word.trim() });
+  }
+  if (!turnos.length && datos.text) turnos.push({ voz: 0, inicio: 0, texto: datos.text.trim() });
+  return turnos;
 }
 
 function leerCuerpo(req) {
@@ -67,8 +107,15 @@ createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   try {
     if (req.method === "POST" && url.pathname === "/api/sesion") {
-      await nuevaSesion();
-      return json(res, 200, { ok: true, modelo_stt: MODELO_STT, modelo_correccion: corrector.modelo });
+      const cuerpo = (await leerCuerpo(req)).toString("utf8");
+      const asistentes = (cuerpo ? JSON.parse(cuerpo).asistentes || "" : "").trim().slice(0, 2000);
+      const s = await nuevaSesion(asistentes);
+      return json(res, 200, { sesion: s.id, modelo_stt: MODELO_STT, modelo_voces: MODELO_VOCES, modelo_correccion: s.corrector.modelo });
+    }
+
+    const s = sesiones.get(url.searchParams.get("sesion"));
+    if (req.method === "POST" && url.pathname.startsWith("/api/") && !s) {
+      return json(res, 400, { error: "Sesión desconocida: recarga la página y vuelve a empezar." });
     }
 
     if (req.method === "POST" && url.pathname === "/api/segmento") {
@@ -85,17 +132,40 @@ createServer(async (req, res) => {
       // Respuesta en dos líneas (NDJSON): primero lo que entendió, luego la versión corregida.
       res.writeHead(200, { "Content-Type": "application/x-ndjson; charset=utf-8" });
       res.write(JSON.stringify({ crudo: true, texto, hablante, seg_transcripcion: segTranscripcion }) + "\n");
-      const turno = cola.then(async () => {
+      const turno = s.cola.then(async () => {
         const t1 = Date.now();
-        const r = await corrector.corregir({ hablante, texto, inicio });
+        const r = await s.corrector.corregir({ hablante, texto, inicio });
         return { ...r, seg_transcripcion: segTranscripcion, seg_correccion: (Date.now() - t1) / 1000 };
       });
-      cola = turno.catch(() => {});
+      s.cola = turno.catch(() => {});
       const r = await turno;
-      if (!salida) await nuevaSesion();
-      await appendFile(salida, JSON.stringify({ hablante: r.hablante, texto: r.texto, inicio: r.inicio, original: r.original }) + "\n");
-      console.log(`${r.hablante.padEnd(11)} ${r.texto}  (${r.seg_transcripcion.toFixed(1)}s + ${r.seg_correccion.toFixed(1)}s)`);
+      await appendFile(s.archivo + "-envivo.jsonl",
+        JSON.stringify({ hablante: r.hablante, rol: r.rol, texto: r.texto, inicio: r.inicio, original: r.original }) + "\n");
+      console.log(`${r.hablante.padEnd(18)} ${r.texto}  (${r.seg_transcripcion.toFixed(1)}s + ${r.seg_correccion.toFixed(1)}s)`);
       return res.end(JSON.stringify(r) + "\n");
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/final") {
+      const audio = await leerCuerpo(req);
+      const tipo = req.headers["content-type"] || "audio/webm";
+      const comienzo = new Date(url.searchParams.get("comienzo") || Date.now());
+      const t0 = Date.now();
+      const turnos = await separarVoces(audio, tipo);
+      const segVoces = (Date.now() - t0) / 1000;
+      const t1 = Date.now();
+      const final = await nombrarVoces(turnos, s.asistentes, KEY);
+      const segNombres = (Date.now() - t1) / 1000;
+      // Mismo formato que el modo en vivo (notas/notetaker.md): inicio en ISO, a partir de la hora en que empezó.
+      const lineas = final.turnos.map((t) => ({
+        hablante: t.hablante,
+        rol: t.rol,
+        texto: t.texto,
+        inicio: new Date(comienzo.getTime() + (Number(t.inicio) || 0) * 1000).toISOString(),
+      }));
+      await writeFile(s.archivo + "-final.jsonl", lineas.map((l) => JSON.stringify(l)).join("\n") + "\n");
+      await writeFile(s.archivo + "-final.webm", audio);
+      console.log(`Final: ${turnos.length} turnos, ${Object.keys(final.voces).length} voces (${segVoces.toFixed(1)}s + ${segNombres.toFixed(1)}s)`);
+      return json(res, 200, { voces: final.voces, turnos: lineas, seg_voces: segVoces, seg_nombres: segNombres });
     }
 
     if (req.method === "GET") {
@@ -113,5 +183,5 @@ createServer(async (req, res) => {
     json(res, 500, { error: e.message });
   }
 }).listen(PUERTO, () => {
-  console.log(`Notetaker listo en http://localhost:${PUERTO}  (voz: ${MODELO_STT}, corrección: ${corrector.modelo})`);
+  console.log(`Notetaker listo en http://localhost:${PUERTO}  (en vivo: ${MODELO_STT}, voces al final: ${MODELO_VOCES})`);
 });

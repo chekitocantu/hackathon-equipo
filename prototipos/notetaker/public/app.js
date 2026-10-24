@@ -1,6 +1,7 @@
 // Graba el micrófono (y, si se pide, el audio de la llamada por separado), corta el audio en las pausas
 // y manda cada pedazo al servidor, que lo transcribe y lo corrige. Cada fuente es un hablante:
 // micrófono = vendedor, audio de la llamada = cliente. Con solo micrófono, DeepSeek adivina quién habló.
+// Además graba la reunión completa; al detener, el servidor separa las voces y le pone nombre a cada una.
 const $ = (id) => document.getElementById(id);
 
 const SILENCIO_MS = 550;   // pausa que cierra una frase
@@ -13,6 +14,8 @@ let fuentes = [];
 let contexto = null;
 let lineas = [];
 let orden = 0;
+let sesion = "";
+let completa = null; // grabadora de toda la reunión (micrófono + llamada mezclados)
 
 function estado(texto, grabando = false) {
   $("estado").textContent = texto;
@@ -84,7 +87,7 @@ function nuevaLinea(hablante, inicio) {
 async function enviar(blob, hablante, inicio) {
   const art = nuevaLinea(hablante, inicio);
   try {
-    const q = new URLSearchParams({ hablante, inicio: inicio.toISOString() });
+    const q = new URLSearchParams({ sesion, hablante, inicio: inicio.toISOString() });
     const res = await fetch(`/api/segmento?${q}`, { method: "POST", headers: { "Content-Type": blob.type }, body: blob });
     if (!res.ok) throw new Error((await res.json()).error || res.status);
     // El servidor manda dos líneas: lo que entendió (se muestra ya) y luego la versión corregida.
@@ -108,12 +111,12 @@ async function enviar(blob, hablante, inicio) {
       }
     }
     if (!r) throw new Error("respuesta incompleta");
-    art.className = `segmento ${r.hablante}`;
+    art.className = `segmento ${r.rol}`;
     art.querySelector(".hablante").textContent = r.hablante;
     art.querySelector(".texto").textContent = r.texto;
     art.querySelector(".original").textContent = r.original === r.texto ? "" : `Entendió: ${r.original}`;
     art.querySelector(".tiempos").textContent = `voz ${r.seg_transcripcion.toFixed(1)}s · corrección ${r.seg_correccion.toFixed(1)}s`;
-    lineas[art.dataset.orden] = { hablante: r.hablante, texto: r.texto, inicio: r.inicio, original: r.original };
+    lineas[art.dataset.orden] = { hablante: r.hablante, rol: r.rol, texto: r.texto, inicio: r.inicio, original: r.original };
     actualizarDescarga();
   } catch (e) {
     art.className = "segmento desconocido";
@@ -145,13 +148,21 @@ async function arrancar(conLlamada) {
       }
       llamada = pantalla;
     }
-    await fetch("/api/sesion", { method: "POST" });
+    const s = await (await fetch("/api/sesion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ asistentes: $("asistentes").value }),
+    })).json();
+    sesion = s.sesion;
     contexto = new AudioContext();
     fuentes = [crearFuente(mic, llamada ? "vendedor" : "", $("nivel-mic"))];
     if (llamada) {
       fuentes.push(crearFuente(new MediaStream(llamada.getAudioTracks()), "cliente", $("nivel-llamada")));
       fuentes[1].extra = llamada;
     }
+    grabarCompleta([mic, ...(llamada ? [new MediaStream(llamada.getAudioTracks())] : [])]);
+    $("final").hidden = true;
+    $("descargar-final").hidden = true;
     $("btn-mic").disabled = $("btn-llamada").disabled = true;
     $("btn-parar").disabled = false;
     estado(llamada ? "Escuchando micrófono y llamada" : "Escuchando micrófono", true);
@@ -160,15 +171,74 @@ async function arrancar(conLlamada) {
   }
 }
 
+// Mezcla las fuentes y graba la reunión entera en una sola pista, para separar voces al final.
+function grabarCompleta(streams) {
+  const mezcla = contexto.createMediaStreamDestination();
+  for (const st of streams) contexto.createMediaStreamSource(st).connect(mezcla);
+  const grabadora = new MediaRecorder(mezcla.stream, TIPO ? { mimeType: TIPO, audioBitsPerSecond: 48000 } : undefined);
+  const partes = [];
+  const comienzo = new Date();
+  grabadora.ondataavailable = (e) => e.data.size && partes.push(e.data);
+  completa = { grabadora, partes, comienzo };
+  grabadora.start(1000);
+}
+
+async function procesarFinal({ grabadora, partes, comienzo }) {
+  const blob = new Blob(partes, { type: grabadora.mimeType || TIPO });
+  $("final").hidden = false;
+  $("voces").textContent = "";
+  $("final-turnos").textContent = "";
+  $("final-estado").textContent = `· separando voces de ${Math.round((Date.now() - comienzo) / 1000)} s de reunión…`;
+  try {
+    const q = new URLSearchParams({ sesion, comienzo: comienzo.toISOString() });
+    const res = await fetch(`/api/final?${q}`, { method: "POST", headers: { "Content-Type": blob.type }, body: blob });
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || res.status);
+    for (const [voz, nombre] of Object.entries(r.voces)) {
+      const chip = document.createElement("span");
+      chip.className = "voz";
+      chip.textContent = `Voz ${voz}: ${nombre}`;
+      $("voces").append(chip);
+    }
+    for (const t of r.turnos) {
+      const art = document.createElement("article");
+      art.className = `segmento ${t.rol === "vendedor" || t.rol === "cliente" ? t.rol : "desconocido"}`;
+      art.innerHTML = `<div class="meta"><span class="hablante"></span><span class="hora"></span></div><p class="texto"></p>`;
+      art.querySelector(".hablante").textContent = t.hablante;
+      art.querySelector(".hora").textContent = new Date(t.inicio).toLocaleTimeString("es-MX");
+      art.querySelector(".texto").textContent = t.texto;
+      $("final-turnos").append(art);
+    }
+    $("final-estado").textContent = `· ${r.turnos.length} turnos (voces ${r.seg_voces.toFixed(1)}s · nombres ${r.seg_nombres.toFixed(1)}s)`;
+    const a = $("descargar-final");
+    if (a.href.startsWith("blob:")) URL.revokeObjectURL(a.href);
+    a.href = URL.createObjectURL(new Blob([r.turnos.map((t) => JSON.stringify(t)).join("\n")], { type: "application/x-ndjson" }));
+    a.hidden = false;
+    $("final").scrollIntoView({ behavior: "smooth" });
+  } catch (e) {
+    $("final-estado").textContent = `· no se pudo: ${e.message}`;
+  }
+}
+
 function parar() {
   for (const f of fuentes) {
     clearInterval(f.timer);
     if (f.grabadora?.state === "recording") f.grabadora.stop(); // manda lo último si hubo voz
-    f.stream.getTracks().forEach((t) => t.stop());
-    f.extra?.getTracks().forEach((t) => t.stop());
   }
-  fuentes = [];
-  contexto?.close();
+  const c = completa;
+  completa = null;
+  const cerrar = () => {
+    for (const f of fuentes) {
+      f.stream.getTracks().forEach((t) => t.stop());
+      f.extra?.getTracks().forEach((t) => t.stop());
+    }
+    fuentes = [];
+    contexto?.close();
+  };
+  if (c?.grabadora.state === "recording") {
+    c.grabadora.onstop = () => { cerrar(); procesarFinal(c); };
+    c.grabadora.stop();
+  } else cerrar();
   $("nivel-mic").style.width = $("nivel-llamada").style.width = "0";
   $("btn-mic").disabled = $("btn-llamada").disabled = false;
   $("btn-parar").disabled = true;

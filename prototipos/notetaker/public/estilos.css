@@ -183,7 +183,54 @@ button:disabled {
 
 body.sin-original .original { display: none; }
 
+.asistentes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.asistentes span { font-weight: 400; color: var(--gris); }
+
+.asistentes textarea {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--linea);
+  border-radius: 10px;
+  background: #fff;
+  resize: vertical;
+}
+
+.asistentes textarea:focus { outline: 2px solid var(--acento); outline-offset: -1px; }
+
+#final {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 2px solid var(--linea);
+}
+
+#final h2 { margin: 0; font-size: 20px; font-weight: 600; }
+#final-estado { font-size: 14px; font-weight: 400; color: var(--gris); }
+#final .nota { margin: 4px 0 14px; font-size: 13px; color: var(--gris); }
+
+#voces { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+
+.voz {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--linea);
+  font-size: 13px;
+}
+
+#final-turnos { display: flex; flex-direction: column; gap: 10px; }
+
 footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
   margin-top: 32px;
   font-size: 14px;
 }
