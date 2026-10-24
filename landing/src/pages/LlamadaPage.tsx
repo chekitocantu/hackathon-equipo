@@ -70,6 +70,8 @@ interface Ayuda {
   nivel: 'no' | 'consulta' | 'acompaña';
   tecnicas: number;
   total: number;
+  /** Proporción de preguntas técnicas a partir de la cual se pide IT (hoy 0.8 = 8 de 10). */
+  umbral: number;
   entra: PuntoIT[];
   noEntra: PuntoIT[];
   aviso: string;
@@ -750,7 +752,7 @@ function PanelAyuda({ ayuda, apilado }: { ayuda: Ayuda; apilado: boolean }) {
         {ayuda.total > 0 && (
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: SECUNDARIO }}>
             <span style={{ width: '90px', height: '6px', borderRadius: '3px', backgroundColor: SEPARADOR, overflow: 'hidden' }}>
-              <span style={{ display: 'block', width: `${Math.round(proporcion * 100)}%`, height: '100%', backgroundColor: proporcion >= 0.6 ? ROJO : AZUL_BOTON }} />
+              <span style={{ display: 'block', width: `${Math.round(proporcion * 100)}%`, height: '100%', backgroundColor: proporcion >= ayuda.umbral ? ROJO : AZUL_BOTON }} />
             </span>
             {ayuda.tecnicas} de {ayuda.total} preguntas técnicas
           </span>

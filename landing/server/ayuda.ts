@@ -1,7 +1,7 @@
 // Algoritmo de ayuda de IT: decide si el vendedor necesita a un ingeniero o arquitecto, y para qué exactamente.
 // Es código determinista (no IA) para que cada decisión diga de dónde salió:
 //   1. Junta las preguntas de la llamada (las que hace el cliente y las que el agente le sugiere al vendedor)
-//      y marca cuáles son técnicas según un glosario. Si 6 de cada 10 o más son técnicas, hace falta IT.
+//      y marca cuáles son técnicas según un glosario. Si 8 de cada 10 o más son técnicas, hace falta IT.
 //   2. Revisa cada producto detectado y cada regla ESC del catálogo: lo "a la medida", lo que cumple su condición
 //      de "cuándo entra arquitecto" y cada regla activada SÍ es de IT; lo estándar o configurable NO, lo cotiza ventas.
 //   3. Con eso da el tipo de caso: estándar (IT no entra), mixto (IT entra solo en una parte), a la medida (todo es de IT)
@@ -41,6 +41,8 @@ export interface Ayuda {
   necesitaIT: boolean;
   tecnicas: number;
   total: number;
+  /** UMBRAL_TECNICO, para que el tablero pinte la barra con el mismo corte. */
+  umbral: number;
   /** Lo que SÍ lleva a un ingeniero, con su motivo. */
   entra: PuntoIT[];
   /** Lo que NO necesita ingeniero: el vendedor lo resuelve con el catálogo. */
@@ -51,7 +53,7 @@ export interface Ayuda {
 }
 
 /** De cada 10 preguntas, cuántas tienen que ser técnicas para pedir apoyo de IT, y cuántas preguntas como mínimo. */
-export const UMBRAL_TECNICO = 0.6;
+export const UMBRAL_TECNICO = 0.8;
 export const MINIMO_PREGUNTAS = 3;
 
 const normalizar = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -182,6 +184,7 @@ export function evaluar(
     necesitaIT,
     tecnicas: tecnicas.length,
     total,
+    umbral: UMBRAL_TECNICO,
     entra,
     noEntra,
     aviso,
