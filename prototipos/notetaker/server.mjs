@@ -102,7 +102,7 @@ createServer(async (req, res) => {
       const ruta = normalize(join(PUBLICO, url.pathname === "/" ? "index.html" : url.pathname));
       if (!ruta.startsWith(PUBLICO)) return json(res, 403, { error: "fuera de public" });
       const contenido = await readFile(ruta);
-      res.writeHead(200, { "Content-Type": TIPOS[extname(ruta)] || "application/octet-stream" });
+      res.writeHead(200, { "Content-Type": TIPOS[extname(ruta)] || "application/octet-stream", "Cache-Control": "no-store" });
       return res.end(contenido);
     }
     json(res, 404, { error: "no existe" });
