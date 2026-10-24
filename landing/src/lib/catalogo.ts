@@ -65,6 +65,7 @@ const catalogo = datos as unknown as Catalogo;
 export const FAMILIAS = catalogo.familias;
 export const PAQUETES = catalogo.paquetes;
 export const AVISO = catalogo.aviso;
+export const CONDICIONES_COMERCIALES = catalogo.condiciones_comerciales;
 
 function buscar<T>(lista: T[], clave: (x: T) => string, id: string, que: string): T {
   const encontrado = lista.find((x) => clave(x) === id);

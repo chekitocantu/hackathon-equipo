@@ -47,6 +47,7 @@ interface Intervencion {
 
 interface Analisis {
   empresa: string | null;
+  industria?: string | null;
   productos: ProductoEnEtapa[];
   datos: DatoTablero[];
   reglas: string[];
@@ -304,6 +305,16 @@ export default function LlamadaPage() {
     };
   }
 
+  /** En modo demo el cliente es el del caso; en vivo, lo que el agente entendió de la llamada. */
+  function clienteDeLlamada() {
+    const f = activa.current.fuente;
+    if (f?.tipo === 'demo') {
+      const c = GUIONES[f.caso].caso;
+      return { empresa: c.empresa, industria: c.industria, ciudad: c.ciudad, empleados: c.empleados };
+    }
+    return { empresa: analisis.empresa, industria: analisis.industria ?? null };
+  }
+
   function datosDeLlamada() {
     const f = activa.current.fuente;
     return {
@@ -543,6 +554,7 @@ export default function LlamadaPage() {
           conversacion={intervenciones.map(({ quien, texto }) => ({ quien, texto }))}
           preguntasSugeridas={sugeridas}
           ayuda={analisis.ayuda}
+          cliente={clienteDeLlamada()}
           esperando={
             intervenciones.length === 0
               ? 'La primera pregunta aparece cuando el cliente cuente su problema.'
