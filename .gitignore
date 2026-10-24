@@ -30,3 +30,7 @@ Thumbs.db
 
 # Materiales del patrocinador que no se pueden publicar
 datos-privados/
+
+# Salidas de las pruebas del notetaker (transcripciones reales)
+prototipos/meetily/salida/
+prototipos/notetaker/salida/

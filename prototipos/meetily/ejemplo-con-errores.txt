@@ -1,0 +1,16 @@
+vendedor|buenas tardes gracias por el tiempo platicame que estan buscando para las sucursales
+cliente|si mira tenemos cuarenta sucursales y la conexion que tenemos hoy se cae mucho
+cliente|queremos algo tipo es de guan para manejar todo desde la matriz
+vendedor|perfecto y cuantos mega bits necesita cada sucursal mas o menos
+cliente|yo diria unos cien megas por sucursal y en la matriz un giga
+vendedor|ok y que nivel de servicio necesitan el ese le a que manejan hoy
+cliente|necesitamos noventa y nueve punto nueve porque somos banco y la ce ene be ve nos audita
+vendedor|claro tambien manejan pagos con tarjeta por lo de pe ce i de ese ese
+cliente|si en todas las sucursales hay terminales
+cliente|tambien nos interesa el fair wall y que alguien nos monitoree tipo un sock
+vendedor|tenemos servicio de soc veinticuatro siete y fire wall de nueva generacion
+cliente|y otra cosa queremos conectarnos a asure pero sin pasar por internet
+vendedor|eso lo hacemos con conexion privada a la nube va directo a microsoft
+cliente|y el presupuesto nos preocupa cuanto seria al mes
+vendedor|depende del plazo normalmente es a treinta y seis meses con un cargo de instalacion
+cliente|treinta y seis meses esta bien si el ere ce mensual nos cuadra
