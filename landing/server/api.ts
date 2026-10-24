@@ -202,10 +202,9 @@ async function analizar(
         .map((d) => `- ${d.etiqueta}: ${d.valor} (${d.fecha})`)
         .join('\n')}\n\n`
     : '';
-  const respuesta = await llamar(config, '/chat/completions', {
+  const respuesta = await preguntarAlAgente(config, {
     model: config.modeloAgente,
     temperature: 0.2,
-    max_tokens: 1500,
     messages: [
       // El catálogo es igual en cada llamada; se marca para caché y así cada turno responde más rápido.
       { role: 'system', content: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }] },
@@ -214,7 +213,18 @@ async function analizar(
   });
   const texto = String(respuesta.choices?.[0]?.message?.content ?? '');
   const json = texto.slice(texto.indexOf('{'), texto.lastIndexOf('}') + 1);
-  return validar(JSON.parse(json), catalogo);
+  try {
+    return validar(JSON.parse(json), catalogo);
+  } catch (e) {
+    // Si el modelo no devuelve JSON válido, deja rastro para saber por qué (corte por tokens, texto extra…).
+    console.warn('[agente] JSON inválido:', {
+      fin: respuesta.choices?.[0]?.finish_reason,
+      uso: respuesta.usage,
+      inicio: texto.slice(0, 400),
+      final: texto.slice(-200),
+    });
+    throw e;
+  }
 }
 
 /** Lo que diga el modelo pasa por aquí: solo sobreviven productos y reglas que existen en el catálogo. */
@@ -261,6 +271,20 @@ function validar(crudo: Record<string, unknown>, catalogo: Catalogo) {
         ? { texto: texto(pregunta.texto, 220), motivo: texto(pregunta.motivo, 120) ?? '', fuente: texto(pregunta.fuente, 80) ?? 'Agente' }
         : null,
   };
+}
+
+/**
+ * Los modelos nuevos razonan solos antes de contestar, y ese razonamiento cuenta dentro de max_tokens: con 1,500
+ * Haiku 5.5 se los gastaba todos pensando y el JSON salía vacío. Sin razonamiento un turno tarda ~2 s en vez de ~10 s.
+ * Si el modelo configurado no permite apagarlo (OpenRouter responde 400), se pide el mínimo.
+ */
+async function preguntarAlAgente(config: ConfigApi, cuerpo: Record<string, unknown>) {
+  try {
+    return await llamar(config, '/chat/completions', { ...cuerpo, max_tokens: 4000, reasoning: { enabled: false } });
+  } catch (e) {
+    if (!(e instanceof Error && e.message.startsWith('OpenRouter 400'))) throw e;
+    return llamar(config, '/chat/completions', { ...cuerpo, max_tokens: 4000, reasoning: { effort: 'low' } });
+  }
 }
 
 // Forma del brief (src/lib/documentos.ts). Se repite aquí porque el servidor no puede importar ese archivo:
@@ -321,9 +345,8 @@ async function redactarBrief(config: ConfigApi, base: BriefBase, transcripcion: 
     .slice(-200)
     .map((t) => `${t.quien}: ${t.texto.replace(/\s+/g, ' ')}`)
     .join('\n');
-  const respuesta = await llamar(config, '/chat/completions', {
+  const respuesta = await preguntarAlAgente(config, {
     model: config.modeloAgente,
-    max_tokens: 2500,
     messages: [
       { role: 'system', content: PROMPT_BRIEF },
       {
@@ -456,7 +479,8 @@ REGLAS
 
 interface RespuestaOpenRouter {
   text?: string;
-  choices?: { message?: { content?: string } }[];
+  choices?: { message?: { content?: string }; finish_reason?: string }[];
+  usage?: unknown;
   error?: { message?: string };
 }
 
